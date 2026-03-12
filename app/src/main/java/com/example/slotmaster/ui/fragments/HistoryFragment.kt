@@ -1,0 +1,35 @@
+package com.example.slotmaster.ui.fragments
+
+import android.os.Bundle
+import android.view.View
+import android.widget.TextView
+import androidx.fragment.app.Fragment
+import com.example.slotmaster.R
+import com.example.slotmaster.ui.database
+
+class HistoryFragment : Fragment(R.layout.fragment_history) {
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        val txtHistory = view.findViewById<TextView>(R.id.txtHistory)
+
+        Thread {
+
+            val partidas = database.partidaDao().getAll()
+
+            val historyText = StringBuilder()
+
+            partidas.forEach {
+                historyText.append(
+                    "Resultado: ${it.resultado} | Monedas: ${it.monedasFinales}\n"
+                )
+            }
+
+            activity?.runOnUiThread {
+                txtHistory.text = historyText.toString()
+            }
+
+        }.start()
+    }
+}
