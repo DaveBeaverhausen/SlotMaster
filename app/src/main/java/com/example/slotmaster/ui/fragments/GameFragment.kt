@@ -8,7 +8,8 @@ import androidx.fragment.app.Fragment
 import com.example.slotmaster.R
 import com.example.slotmaster.domain.GameEngine
 import com.example.slotmaster.data.entity.PartidaEntity
-import com.example.slotmaster.ui.database
+import com.example.slotmaster.database.DatabaseProvider
+import kotlin.concurrent.thread
 
 class GameFragment : Fragment(R.layout.fragment_game) {
 
@@ -47,21 +48,26 @@ class GameFragment : Fragment(R.layout.fragment_game) {
 
             txtCoins.text = "Coins: $coins"
 
-            // Si el jugador se queda sin monedas, guardar partida
-            if (coins <= 0) {
+            saveGame(result)
+        }
+    }
 
-                val resultado = "${reel1.text} ${reel2.text} ${reel3.text}"
+    private fun saveGame(result: List<String>) {
 
-                val partida = PartidaEntity(
-                    fecha = System.currentTimeMillis(),
-                    monedasFinales = coins,
-                    resultado = resultado
-                )
+        val resultadoTexto = result.joinToString(" ")
 
-                Thread {
-                    database.partidaDao().insert(partida)
-                }.start()
-            }
+        val partida = PartidaEntity(
+            fecha = System.currentTimeMillis(),
+            monedasFinales = coins,
+            resultado = resultadoTexto
+        )
+
+        thread {
+
+            val db = DatabaseProvider.getDatabase(requireContext())
+
+            db.partidaDao().insert(partida)
+
         }
     }
 }
