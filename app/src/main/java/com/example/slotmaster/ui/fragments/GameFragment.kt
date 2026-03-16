@@ -25,13 +25,13 @@ class GameFragment : Fragment(R.layout.fragment_game) {
 
         val txtCoins = view.findViewById<TextView>(R.id.txtCoins)
         val btnSpin = view.findViewById<Button>(R.id.btnSpin)
+        val btnExit = view.findViewById<Button>(R.id.btnExit)
 
         txtCoins.text = "Coins: $coins"
 
         btnSpin.setOnClickListener {
 
             val bet = 10
-
             if (coins < bet) return@setOnClickListener
 
             coins -= bet
@@ -45,10 +45,15 @@ class GameFragment : Fragment(R.layout.fragment_game) {
             val reward = gameEngine.calculateReward(result, bet)
 
             coins += reward
-
             txtCoins.text = "Coins: $coins"
 
             saveGame(result)
+        }
+
+        btnExit.setOnClickListener {
+            parentFragmentManager.beginTransaction()
+                .replace(R.id.fragment_container, MenuFragment())
+                .commit()
         }
     }
 
@@ -63,11 +68,8 @@ class GameFragment : Fragment(R.layout.fragment_game) {
         )
 
         thread {
-
             val db = DatabaseProvider.getDatabase(requireContext())
-
             db.partidaDao().insert(partida)
-
         }
     }
 }
