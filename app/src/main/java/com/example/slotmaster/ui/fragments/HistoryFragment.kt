@@ -6,6 +6,8 @@ import android.widget.TextView
 import androidx.fragment.app.Fragment
 import com.example.slotmaster.R
 import com.example.slotmaster.ui.database
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
+import io.reactivex.rxjava3.schedulers.Schedulers
 
 class HistoryFragment : Fragment(R.layout.fragment_history) {
 
@@ -14,22 +16,20 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
 
         val txtHistory = view.findViewById<TextView>(R.id.txtHistory)
 
-        Thread {
+        database.partidaDao().getAll()
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe { partidas ->
 
-            val partidas = database.partidaDao().getAll()
+                val historyText = StringBuilder()
 
-            val historyText = StringBuilder()
+                partidas.forEach {
+                    historyText.append(
+                        "Resultado: ${it.resultado} | Monedas: ${it.monedasFinales}\n"
+                    )
+                }
 
-            partidas.forEach {
-                historyText.append(
-                    "Resultado: ${it.resultado} | Monedas: ${it.monedasFinales}\n"
-                )
-            }
-
-            activity?.runOnUiThread {
                 txtHistory.text = historyText.toString()
             }
-
-        }.start()
     }
 }
