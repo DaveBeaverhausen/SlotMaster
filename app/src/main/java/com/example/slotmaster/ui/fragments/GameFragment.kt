@@ -15,6 +15,7 @@ class GameFragment : Fragment(R.layout.fragment_game) {
 
     private val gameEngine = GameEngine()
     private var coins = 100
+    private var isSpinning = false
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -31,26 +32,59 @@ class GameFragment : Fragment(R.layout.fragment_game) {
 
         btnSpin.setOnClickListener {
 
-            val bet = 10
+            if (isSpinning) return@setOnClickListener
 
+            val bet = 10
             if (coins < bet) return@setOnClickListener
 
+            isSpinning = true
+            btnSpin.isEnabled = false
+
             coins -= bet
-
-            val result = gameEngine.spin()
-
-            reel1.text = result[0]
-            reel2.text = result[1]
-            reel3.text = result[2]
-
-            val reward = gameEngine.calculateReward(result, bet)
-
-            coins += reward
-
             txtCoins.text = "Coins: $coins"
 
-            // 🔥 GUARDAR PARTIDA
-            saveGame(result)
+            val finalResult = gameEngine.spin()
+            val symbols = listOf("🍒", "⭐", "💎", "7")
+
+            thread {
+
+                // Animación rápida
+                repeat(10) {
+
+                    val temp1 = symbols.random()
+                    val temp2 = symbols.random()
+                    val temp3 = symbols.random()
+
+                    activity?.runOnUiThread {
+                        reel1.text = temp1
+                        reel2.text = temp2
+                        reel3.text = temp3
+                    }
+
+                    Thread.sleep(100)
+                }
+
+                // Resultado progresivo
+                activity?.runOnUiThread { reel1.text = finalResult[0] }
+                Thread.sleep(300)
+
+                activity?.runOnUiThread { reel2.text = finalResult[1] }
+                Thread.sleep(300)
+
+                activity?.runOnUiThread { reel3.text = finalResult[2] }
+
+                val reward = gameEngine.calculateReward(finalResult, bet)
+                coins += reward
+
+                activity?.runOnUiThread {
+                    txtCoins.text = "Coins: $coins"
+                    btnSpin.isEnabled = true
+                    isSpinning = false
+                }
+
+                // 💾 Guardar partida
+                saveGame(finalResult)
+            }
         }
 
         btnExit.setOnClickListener {

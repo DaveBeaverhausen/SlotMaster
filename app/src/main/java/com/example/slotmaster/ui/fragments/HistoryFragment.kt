@@ -7,6 +7,7 @@ import androidx.fragment.app.Fragment
 import com.example.slotmaster.R
 import com.example.slotmaster.database.DatabaseProvider
 import kotlin.concurrent.thread
+import android.widget.Button
 
 class HistoryFragment : Fragment(R.layout.fragment_history) {
 
@@ -14,6 +15,12 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
         super.onViewCreated(view, savedInstanceState)
 
         val txtHistory = view.findViewById<TextView>(R.id.txtHistory)
+        val btnBack = view.findViewById<Button>(R.id.btnBack)
+
+        // BOTÓN VOLVER
+        btnBack.setOnClickListener {
+            parentFragmentManager.popBackStack()
+        }
 
         thread {
 

@@ -1,14 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:orientation="vertical">
 
-    <TextView
-        android:id="@+id/txtHistory"
-        android:layout_width="match_parent"
+    <Button
+        android:id="@+id/btnBack"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Cargando historial..."
-        android:textSize="16sp"
-        android:padding="20dp"/>
+        android:text="← Volver"
+        android:layout_margin="16dp"/>
 
-</ScrollView>
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <TextView
+            android:id="@+id/txtHistory"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Cargando historial..."
+            android:textSize="16sp"
+            android:padding="20dp"/>
+
+    </ScrollView>
+
+</LinearLayout>
