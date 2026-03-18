@@ -7,8 +7,8 @@
         android:id="@+id/txtHistory"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Historial de partidas"
-        android:textSize="18sp"
+        android:text="Cargando historial..."
+        android:textSize="16sp"
         android:padding="20dp"/>
 
 </ScrollView>

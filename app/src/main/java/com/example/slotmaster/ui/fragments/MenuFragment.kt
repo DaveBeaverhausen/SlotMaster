@@ -22,14 +22,22 @@ class MenuFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         val btnPlay = view.findViewById<Button>(R.id.btnPlay)
+        val btnHistory = view.findViewById<Button>(R.id.btnHistory)
 
+        // JUGAR
         btnPlay.setOnClickListener {
-
             parentFragmentManager.beginTransaction()
                 .replace(R.id.fragment_container, GameFragment())
                 .addToBackStack(null)
                 .commit()
+        }
 
+        // HISTORIAL
+        btnHistory.setOnClickListener {
+            parentFragmentManager.beginTransaction()
+                .replace(R.id.fragment_container, HistoryFragment())
+                .addToBackStack(null)
+                .commit()
         }
     }
 }

@@ -32,6 +32,7 @@ class GameFragment : Fragment(R.layout.fragment_game) {
         btnSpin.setOnClickListener {
 
             val bet = 10
+
             if (coins < bet) return@setOnClickListener
 
             coins -= bet
@@ -45,8 +46,10 @@ class GameFragment : Fragment(R.layout.fragment_game) {
             val reward = gameEngine.calculateReward(result, bet)
 
             coins += reward
+
             txtCoins.text = "Coins: $coins"
 
+            // 🔥 GUARDAR PARTIDA
             saveGame(result)
         }
 
@@ -67,9 +70,15 @@ class GameFragment : Fragment(R.layout.fragment_game) {
             resultado = resultadoTexto
         )
 
+        val db = DatabaseProvider.getDatabase(requireContext())
+
         thread {
-            val db = DatabaseProvider.getDatabase(requireContext())
-            db.partidaDao().insert(partida)
+            try {
+                db.partidaDao().insert(partida)
+                println("PARTIDA GUARDADA: $resultadoTexto")
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
     }
 }
