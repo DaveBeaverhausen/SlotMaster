@@ -43,6 +43,17 @@
             android:textSize="40sp"
             android:layout_margin="10dp"/>
 
+        <TextView
+            android:id="@+id/txtResult"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=""
+            android:textSize="26sp"
+            android:textStyle="bold"
+            android:alpha="0"
+            android:translationY="-200dp"
+            android:layout_marginBottom="20dp"/>
+
     </LinearLayout>
 
     <Button
