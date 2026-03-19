@@ -2,12 +2,15 @@ package com.example.slotmaster.ui.fragments
 
 import android.os.Bundle
 import android.view.View
+import android.widget.Button
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import com.example.slotmaster.R
 import com.example.slotmaster.database.DatabaseProvider
-import kotlin.concurrent.thread
-import android.widget.Button
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
+import io.reactivex.rxjava3.schedulers.Schedulers
+import java.text.SimpleDateFormat
+import java.util.*
 
 class HistoryFragment : Fragment(R.layout.fragment_history) {
 
@@ -17,31 +20,45 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
         val txtHistory = view.findViewById<TextView>(R.id.txtHistory)
         val btnBack = view.findViewById<Button>(R.id.btnBack)
 
-        // BOTÓN VOLVER
+        // Volver al menú
         btnBack.setOnClickListener {
             parentFragmentManager.popBackStack()
         }
 
-        thread {
+        val db = DatabaseProvider.getDatabase(requireContext())
 
-            val db = DatabaseProvider.getDatabase(requireContext())
-            val partidas = db.partidaDao().getAllList()
+        val sdf = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
 
-            val historyText = StringBuilder()
+        db.partidaDao().getAll()
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe(
+                { partidas ->
 
-            if (partidas.isEmpty()) {
-                historyText.append("No hay partidas guardadas todavía")
-            } else {
-                partidas.forEach {
-                    historyText.append(
-                        "Resultado: ${it.resultado} | Monedas: ${it.monedasFinales}\n"
-                    )
+                    val historyText = StringBuilder()
+
+                    if (partidas.isEmpty()) {
+                        historyText.append("No hay partidas")
+                    } else {
+                        partidas.forEach {
+
+                            val fechaFormateada = sdf.format(Date(it.fecha))
+
+                            historyText.append(
+                                "🗓 $fechaFormateada\n" +
+                                        "🎰 Resultado: ${it.resultado}\n" +
+                                        "💰 Monedas: ${it.monedasFinales}\n" +
+                                        "------------------------\n"
+                            )
+                        }
+                    }
+
+                    txtHistory.text = historyText.toString()
+                },
+                { error ->
+                    error.printStackTrace()
+                    txtHistory.text = "Error al cargar historial"
                 }
-            }
-
-            activity?.runOnUiThread {
-                txtHistory.text = historyText.toString()
-            }
-        }
+            )
     }
 }

@@ -72,6 +72,7 @@ class GameFragment : Fragment(R.layout.fragment_game) {
     // SISTEMA DE SONIDO PRO
     private fun playSound(soundResId: Int, onComplete: (() -> Unit)? = null) {
 
+        mediaPlayer?.stop()
         mediaPlayer?.release()
 
         mediaPlayer = MediaPlayer.create(requireContext(), soundResId)
@@ -155,7 +156,7 @@ class GameFragment : Fragment(R.layout.fragment_game) {
                 isSpinning = false
             }
 
-            // 💾 guardar partida
+            // guardar partida
             saveGame(finalResult)
         }
     }
@@ -173,19 +174,16 @@ class GameFragment : Fragment(R.layout.fragment_game) {
 
         val db = DatabaseProvider.getDatabase(requireContext())
 
-        thread {
-            try {
-                db.partidaDao().insert(partida)
-                println("PARTIDA GUARDADA: $resultadoTexto")
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        mediaPlayer?.release()
-        mediaPlayer = null
+        db.partidaDao().insert(partida)
+            .subscribeOn(io.reactivex.rxjava3.schedulers.Schedulers.io())
+            .observeOn(io.reactivex.rxjava3.android.schedulers.AndroidSchedulers.mainThread())
+            .subscribe(
+                {
+                    println("PARTIDA GUARDADA RX")
+                },
+                {
+                    it.printStackTrace()
+                }
+            )
     }
 }
