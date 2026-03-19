@@ -1,10 +1,10 @@
 package com.example.slotmaster.ui.fragments
 
 import android.graphics.Color
-import android.media.MediaPlayer
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import com.example.slotmaster.R
@@ -19,10 +19,12 @@ class GameFragment : Fragment(R.layout.fragment_game) {
     private var coins = 100
     private var isSpinning = false
 
-    private var mediaPlayer: MediaPlayer? = null
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        val reel1 = view.findViewById<ImageView>(R.id.reel1)
+        val reel2 = view.findViewById<ImageView>(R.id.reel2)
+        val reel3 = view.findViewById<ImageView>(R.id.reel3)
 
         val txtCoins = view.findViewById<TextView>(R.id.txtCoins)
         val txtResult = view.findViewById<TextView>(R.id.txtResult)
@@ -32,7 +34,6 @@ class GameFragment : Fragment(R.layout.fragment_game) {
 
         txtCoins.text = "Coins: $coins"
 
-        // BOTÓN GIRAR
         btnSpin.setOnClickListener {
 
             if (isSpinning) return@setOnClickListener
@@ -48,20 +49,77 @@ class GameFragment : Fragment(R.layout.fragment_game) {
             txtCoins.text = "Coins: $coins"
 
             val finalResult = gameEngine.spin()
+            val symbols = listOf("🍒", "🍋", "💎", "7")
 
-            // SECUENCIA: coin  spin  animación
-            playSound(R.raw.coin) {
+            thread {
 
+                // ANIMACIÓN DE GIRO
+                repeat(15) {
 
-                playSound(R.raw.spin)
+                    val temp1 = symbols.random()
+                    val temp2 = symbols.random()
+                    val temp3 = symbols.random()
 
+                    activity?.runOnUiThread {
+                        reel1.setImageResource(getImage(temp1))
+                        reel2.setImageResource(getImage(temp2))
+                        reel3.setImageResource(getImage(temp3))
+                    }
 
-                startSpinAnimation(view, finalResult, bet)
+                    Thread.sleep(80)
+                }
+
+                // PARADA PROGRESIVA
+                activity?.runOnUiThread {
+                    reel1.setImageResource(getImage(finalResult[0]))
+                    bounceAnimation(reel1)
+                }
+                Thread.sleep(200)
+
+                activity?.runOnUiThread {
+                    reel2.setImageResource(getImage(finalResult[1]))
+                    bounceAnimation(reel2)
+                }
+                Thread.sleep(200)
+
+                activity?.runOnUiThread {
+                    reel3.setImageResource(getImage(finalResult[2]))
+                    bounceAnimation(reel3)
+                }
+
+                val reward = gameEngine.calculateReward(finalResult, bet)
+                coins += reward
+
+                activity?.runOnUiThread {
+
+                    txtCoins.text = "Coins: $coins"
+
+                    if (reward > 0) {
+                        txtResult.text = "🎉 WIN +$reward"
+                        txtResult.setTextColor(Color.GREEN)
+                    } else {
+                        txtResult.text = "❌ LOSE"
+                        txtResult.setTextColor(Color.RED)
+                    }
+
+                    // 🎯 animación resultado
+                    txtResult.alpha = 0f
+                    txtResult.translationY = -150f
+
+                    txtResult.animate()
+                        .alpha(1f)
+                        .translationY(0f)
+                        .setDuration(400)
+                        .start()
+
+                    isSpinning = false
+                    btnSpin.isEnabled = true
+
+                    saveGame(finalResult)
+                }
             }
-
         }
 
-        // SALIR
         btnExit.setOnClickListener {
             parentFragmentManager.beginTransaction()
                 .replace(R.id.fragment_container, MenuFragment())
@@ -69,99 +127,32 @@ class GameFragment : Fragment(R.layout.fragment_game) {
         }
     }
 
-    // SISTEMA DE SONIDO PRO
-    private fun playSound(soundResId: Int, onComplete: (() -> Unit)? = null) {
-
-        mediaPlayer?.stop()
-        mediaPlayer?.release()
-
-        mediaPlayer = MediaPlayer.create(requireContext(), soundResId)
-        mediaPlayer?.start()
-
-        mediaPlayer?.setOnCompletionListener {
-            it.release()
-            mediaPlayer = null
-            onComplete?.invoke()
+    // MAPEO
+    private fun getImage(symbol: String): Int {
+        return when (symbol) {
+            "🍒" -> R.drawable.cherry
+            "🍋" -> R.drawable.lemon
+            "💎" -> R.drawable.diamond
+            "7" -> R.drawable.seven
+            else -> R.drawable.cherry
         }
     }
 
-    // ANIMACIÓN DE REELS
-    private fun startSpinAnimation(view: View, finalResult: List<String>, bet: Int) {
-
-        val reel1 = view.findViewById<TextView>(R.id.reel1)
-        val reel2 = view.findViewById<TextView>(R.id.reel2)
-        val reel3 = view.findViewById<TextView>(R.id.reel3)
-
-        val txtCoins = view.findViewById<TextView>(R.id.txtCoins)
-        val txtResult = view.findViewById<TextView>(R.id.txtResult)
-        val btnSpin = view.findViewById<Button>(R.id.btnSpin)
-
-        val symbols = listOf("🍒", "⭐", "💎", "7")
-
-        thread {
-
-            // animación rápida
-            repeat(20) {
-
-                val temp1 = symbols.random()
-                val temp2 = symbols.random()
-                val temp3 = symbols.random()
-
-                activity?.runOnUiThread {
-                    reel1.text = temp1
-                    reel2.text = temp2
-                    reel3.text = temp3
-                }
-
-                Thread.sleep(50)
-            }
-
-            // parada progresiva
-            activity?.runOnUiThread { reel1.text = finalResult[0] }
-            Thread.sleep(200)
-
-            activity?.runOnUiThread { reel2.text = finalResult[1] }
-            Thread.sleep(200)
-
-            activity?.runOnUiThread { reel3.text = finalResult[2] }
-
-            val reward = gameEngine.calculateReward(finalResult, bet)
-            coins += reward
-
-            activity?.runOnUiThread {
-
-                txtCoins.text = "Coins: $coins"
-
-                if (reward > 0) {
-                    txtResult.text = "🎉 WIN +$reward"
-                    txtResult.setTextColor(Color.GREEN)
-                    playSound(R.raw.win)
-                } else {
-                    txtResult.text = "❌ LOSE"
-                    txtResult.setTextColor(Color.RED)
-                    playSound(R.raw.lose)
-                }
-
-                // animación resultado
-                txtResult.alpha = 0f
-                txtResult.translationY = -200f
-
-                txtResult.animate()
-                    .alpha(1f)
+    // ANIMACIÓN REBOTE
+    private fun bounceAnimation(view: View) {
+        view.animate()
+            .translationY(30f)
+            .setDuration(80)
+            .withEndAction {
+                view.animate()
                     .translationY(0f)
-                    .setDuration(500)
+                    .setDuration(120)
                     .start()
-
-                btnSpin.isEnabled = true
-                isSpinning = false
             }
-
-            // guardar partida
-            saveGame(finalResult)
-        }
+            .start()
     }
 
-    // GUARDAR PARTIDA
+    // GUARDADO
     private fun saveGame(result: List<String>) {
 
         val resultadoTexto = result.joinToString(" ")
@@ -172,18 +163,14 @@ class GameFragment : Fragment(R.layout.fragment_game) {
             resultado = resultadoTexto
         )
 
-        val db = DatabaseProvider.getDatabase(requireContext())
-
-        db.partidaDao().insert(partida)
-            .subscribeOn(io.reactivex.rxjava3.schedulers.Schedulers.io())
-            .observeOn(io.reactivex.rxjava3.android.schedulers.AndroidSchedulers.mainThread())
-            .subscribe(
-                {
-                    println("PARTIDA GUARDADA RX")
-                },
-                {
-                    it.printStackTrace()
-                }
-            )
+        thread {
+            try {
+                val db = DatabaseProvider.getDatabase(requireContext())
+                db.partidaDao().insert(partida)
+                println("PARTIDA GUARDADA: $resultadoTexto")
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
     }
 }
