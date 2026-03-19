@@ -1,8 +1,13 @@
 package com.example.slotmaster.ui.fragments
 
+import android.content.Context
 import android.graphics.Color
+import android.media.MediaPlayer
 import android.os.Bundle
+import android.os.VibrationEffect
+import android.os.Vibrator
 import android.view.View
+import android.view.ViewGroup
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
@@ -53,7 +58,7 @@ class GameFragment : Fragment(R.layout.fragment_game) {
 
             thread {
 
-                // ANIMACIÓN DE GIRO
+                // 🎰 GIRO
                 repeat(15) {
 
                     val temp1 = symbols.random()
@@ -69,7 +74,7 @@ class GameFragment : Fragment(R.layout.fragment_game) {
                     Thread.sleep(80)
                 }
 
-                // PARADA PROGRESIVA
+                // 🎯 PARADA + REBOTE
                 activity?.runOnUiThread {
                     reel1.setImageResource(getImage(finalResult[0]))
                     bounceAnimation(reel1)
@@ -87,6 +92,9 @@ class GameFragment : Fragment(R.layout.fragment_game) {
                     bounceAnimation(reel3)
                 }
 
+                // ⏱ pequeño delay para mejorar impacto
+                Thread.sleep(200)
+
                 val reward = gameEngine.calculateReward(finalResult, bet)
                 coins += reward
 
@@ -95,22 +103,19 @@ class GameFragment : Fragment(R.layout.fragment_game) {
                     txtCoins.text = "Coins: $coins"
 
                     if (reward > 0) {
-                        txtResult.text = "🎉 WIN +$reward"
-                        txtResult.setTextColor(Color.GREEN)
+
+                        txtResult.text = "💥 WIN +$reward"
+                        txtResult.setTextColor(Color.YELLOW)
+
+                        winAnimation(txtResult)
+                        vibrateWin()
+                        playWinSound()
+                        spawnCelebration(requireView())
+
                     } else {
                         txtResult.text = "❌ LOSE"
                         txtResult.setTextColor(Color.RED)
                     }
-
-                    // 🎯 animación resultado
-                    txtResult.alpha = 0f
-                    txtResult.translationY = -150f
-
-                    txtResult.animate()
-                        .alpha(1f)
-                        .translationY(0f)
-                        .setDuration(400)
-                        .start()
 
                     isSpinning = false
                     btnSpin.isEnabled = true
@@ -127,7 +132,7 @@ class GameFragment : Fragment(R.layout.fragment_game) {
         }
     }
 
-    // MAPEO
+    // 🎯 símbolo → imagen
     private fun getImage(symbol: String): Int {
         return when (symbol) {
             "🍒" -> R.drawable.cherry
@@ -138,7 +143,7 @@ class GameFragment : Fragment(R.layout.fragment_game) {
         }
     }
 
-    // ANIMACIÓN REBOTE
+    // 🔥 rebote reel
     private fun bounceAnimation(view: View) {
         view.animate()
             .translationY(30f)
@@ -152,7 +157,108 @@ class GameFragment : Fragment(R.layout.fragment_game) {
             .start()
     }
 
-    // GUARDADO
+    // 💥 animación win potente
+    private fun winAnimation(view: TextView) {
+
+        view.scaleX = 0.3f
+        view.scaleY = 0.3f
+        view.alpha = 0f
+
+        view.animate()
+            .scaleX(1.5f)
+            .scaleY(1.5f)
+            .alpha(1f)
+            .setDuration(250)
+            .withEndAction {
+
+                view.animate()
+                    .scaleX(1.2f)
+                    .scaleY(1.2f)
+                    .setDuration(120)
+                    .withEndAction {
+
+                        view.animate()
+                            .scaleX(1.4f)
+                            .scaleY(1.4f)
+                            .setDuration(120)
+                            .start()
+                    }
+                    .start()
+            }
+            .start()
+    }
+
+    // 📳 vibración
+    private fun vibrateWin() {
+        val vibrator = requireContext().getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            vibrator.vibrate(
+                VibrationEffect.createOneShot(200, VibrationEffect.DEFAULT_AMPLITUDE)
+            )
+        } else {
+            vibrator.vibrate(200)
+        }
+    }
+
+    // 🔊 sonido win
+    private fun playWinSound() {
+        val mediaPlayer = MediaPlayer.create(requireContext(), R.raw.win)
+        mediaPlayer.start()
+
+        mediaPlayer.setOnCompletionListener {
+            it.release()
+        }
+    }
+
+    // celebración visual
+    private fun spawnCelebration(view: View) {
+
+        val container = view.rootView as ViewGroup
+
+        // 💥 explosión inicial (impacto inmediato)
+        repeat(10) {
+            spawnCoin(container, fast = true)
+        }
+
+        // 🎈 lluvia de monedas (efecto prolongado)
+        repeat(25) {
+            spawnCoin(container, fast = false)
+        }
+    }
+    private fun spawnCoin(container: ViewGroup, fast: Boolean) {
+
+        val coin = ImageView(requireContext())
+        coin.setImageResource(R.drawable.coin)
+
+        val size = (40..100).random()
+
+        val params = ViewGroup.LayoutParams(size, size)
+        coin.layoutParams = params
+
+        coin.x = (0..container.width).random().toFloat()
+        coin.y = container.height.toFloat()
+
+        container.addView(coin)
+
+        val duration = if (fast) {
+            (500..900).random().toLong()
+        } else {
+            (1200..2500).random().toLong()
+        }
+
+        coin.animate()
+            .translationY(-container.height.toFloat())
+            .rotation((0..720).random().toFloat())
+            .alpha(0.9f)
+            .setDuration(duration)
+            .withEndAction {
+                container.removeView(coin)
+            }
+            .start()
+    }
+
+    // guardar partida
     private fun saveGame(result: List<String>) {
 
         val resultadoTexto = result.joinToString(" ")
@@ -167,7 +273,6 @@ class GameFragment : Fragment(R.layout.fragment_game) {
             try {
                 val db = DatabaseProvider.getDatabase(requireContext())
                 db.partidaDao().insert(partida)
-                println("PARTIDA GUARDADA: $resultadoTexto")
             } catch (e: Exception) {
                 e.printStackTrace()
             }
