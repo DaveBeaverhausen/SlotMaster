@@ -11,8 +11,11 @@ import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.schedulers.Schedulers
 import java.text.SimpleDateFormat
 import java.util.*
+import io.reactivex.rxjava3.disposables.CompositeDisposable
 
 class HistoryFragment : Fragment(R.layout.fragment_history) {
+
+    private val disposables = CompositeDisposable()
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -29,7 +32,7 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
 
         val sdf = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
 
-        db.partidaDao().getAll()
+        val disposable = db.partidaDao().getAll()
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe(
@@ -60,5 +63,10 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
                     txtHistory.text = "Error al cargar historial"
                 }
             )
+        disposables.add(disposable)
+    }
+    override fun onDestroyView() {
+        super.onDestroyView()
+        disposables.clear()
     }
 }

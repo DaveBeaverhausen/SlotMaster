@@ -17,9 +17,13 @@ import com.example.slotmaster.domain.GameEngine
 import com.example.slotmaster.data.entity.PartidaEntity
 import com.example.slotmaster.database.DatabaseProvider
 import kotlin.concurrent.thread
+import io.reactivex.rxjava3.schedulers.Schedulers
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
+import io.reactivex.rxjava3.disposables.CompositeDisposable
 
 class GameFragment : Fragment(R.layout.fragment_game) {
 
+    private val disposables = CompositeDisposable()
     private val gameEngine = GameEngine()
     private var coins = 100
     private var isSpinning = false
@@ -259,23 +263,31 @@ class GameFragment : Fragment(R.layout.fragment_game) {
     }
 
     // guardar partida
-    private fun saveGame(result: List<String>) {
+        private fun saveGame(result: List<String>) {
 
-        val resultadoTexto = result.joinToString(" ")
+            val resultadoTexto = result.joinToString(" ")
 
-        val partida = PartidaEntity(
-            fecha = System.currentTimeMillis(),
-            monedasFinales = coins,
-            resultado = resultadoTexto
-        )
+            val partida = PartidaEntity(
+                fecha = System.currentTimeMillis(),
+                monedasFinales = coins,
+                resultado = resultadoTexto
+            )
 
-        thread {
-            try {
-                val db = DatabaseProvider.getDatabase(requireContext())
-                db.partidaDao().insert(partida)
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
+            val db = DatabaseProvider.getDatabase(requireContext())
+
+            val disposable = db.partidaDao().insert(partida)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                    { /* OK */ },
+                    { error -> error.printStackTrace() }
+                )
+
+            disposables.add(disposable)
         }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        disposables.clear()
     }
 }

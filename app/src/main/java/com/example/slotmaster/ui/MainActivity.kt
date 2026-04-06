@@ -7,19 +7,10 @@ import com.example.slotmaster.R
 import com.example.slotmaster.database.AppDatabase
 import com.example.slotmaster.ui.fragments.WelcomeFragment
 
-lateinit var database: AppDatabase
-
 class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        // Inicializar base de datos SQLite (Room)
-        database = Room.databaseBuilder(
-            applicationContext,
-            AppDatabase::class.java,
-            "slotmaster-db"
-        ).build()
 
         setContentView(R.layout.activity_main)
 
