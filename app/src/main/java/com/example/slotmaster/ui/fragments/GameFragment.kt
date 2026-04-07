@@ -62,7 +62,7 @@ class GameFragment : Fragment(R.layout.fragment_game) {
 
             thread {
 
-                // 🎰 GIRO
+                // GIRO
                 repeat(15) {
 
                     val temp1 = symbols.random()
@@ -78,7 +78,7 @@ class GameFragment : Fragment(R.layout.fragment_game) {
                     Thread.sleep(80)
                 }
 
-                // 🎯 PARADA + REBOTE
+                // PARADA + REBOTE
                 activity?.runOnUiThread {
                     reel1.setImageResource(getImage(finalResult[0]))
                     bounceAnimation(reel1)
@@ -136,7 +136,7 @@ class GameFragment : Fragment(R.layout.fragment_game) {
         }
     }
 
-    // 🎯 símbolo → imagen
+    // símbolo imagen
     private fun getImage(symbol: String): Int {
         return when (symbol) {
             "🍒" -> R.drawable.cherry
@@ -147,7 +147,7 @@ class GameFragment : Fragment(R.layout.fragment_game) {
         }
     }
 
-    // 🔥 rebote reel
+    // rebote reel
     private fun bounceAnimation(view: View) {
         view.animate()
             .translationY(30f)
@@ -161,7 +161,7 @@ class GameFragment : Fragment(R.layout.fragment_game) {
             .start()
     }
 
-    // 💥 animación win potente
+    // animación win potente
     private fun winAnimation(view: TextView) {
 
         view.scaleX = 0.3f
@@ -192,7 +192,7 @@ class GameFragment : Fragment(R.layout.fragment_game) {
             .start()
     }
 
-    // 📳 vibración
+    // vibración
     private fun vibrateWin() {
         val vibrator = requireContext().getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
 
@@ -205,7 +205,7 @@ class GameFragment : Fragment(R.layout.fragment_game) {
         }
     }
 
-    // 🔊 sonido win
+    // sonido win
     private fun playWinSound() {
         val mediaPlayer = MediaPlayer.create(requireContext(), R.raw.win)
         mediaPlayer.start()
@@ -220,12 +220,12 @@ class GameFragment : Fragment(R.layout.fragment_game) {
 
         val container = view.rootView as ViewGroup
 
-        // 💥 explosión inicial (impacto inmediato)
+        // explosión inicial (impacto inmediato)
         repeat(10) {
             spawnCoin(container, fast = true)
         }
 
-        // 🎈 lluvia de monedas (efecto prolongado)
+        // lluvia de monedas (efecto prolongado)
         repeat(25) {
             spawnCoin(container, fast = false)
         }
