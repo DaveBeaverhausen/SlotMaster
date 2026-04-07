@@ -1,22 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     android:gravity="center"
-    android:orientation="vertical">
+    android:background="@drawable/bg_casino"
+    android:padding="24dp">
 
+    <!-- TÍTULO -->
     <TextView
-        android:id="@+id/title"
-        android:text="SlotMaster"
-        android:textSize="36sp"
-        android:textStyle="bold"
-        android:layout_marginBottom="40dp"
+        android:id="@+id/txtTitle"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"/>
+        android:layout_height="wrap_content"
+        android:text="SLOT MASTER"
+        android:textSize="40sp"
+        android:textStyle="bold"
+        android:textColor="#FFD700"
+        android:layout_marginBottom="10dp"/>
 
+    <!-- SUBTÍTULO -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Prueba tu suerte!"
+        android:textSize="16sp"
+        android:textColor="#FFFFFF"
+        android:layout_marginBottom="60dp"/>
+
+    <!--BOTÓN COMENZAR -->
     <Button
         android:id="@+id/btnStart"
-        android:text="Comenzar"
-        android:layout_width="200dp"
-        android:layout_height="wrap_content"/>
+        android:layout_width="240dp"
+        android:layout_height="wrap_content"
+        android:text="COMENZAR"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:textColor="#000000"
+        android:backgroundTint="#FFD700"
+        android:layout_marginBottom="20dp"/>
 
 </LinearLayout>

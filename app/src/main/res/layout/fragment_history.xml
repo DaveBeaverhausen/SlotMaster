@@ -2,15 +2,31 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:background="@drawable/bg_casino"
+    android:padding="20dp">
 
+    <!-- VOLVER -->
     <Button
         android:id="@+id/btnBack"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="← Volver"
-        android:layout_margin="16dp"/>
+        android:textColor="#FFFFFF"
+        android:backgroundTint="#6C757D"
+        android:layout_marginBottom="20dp"/>
 
+    <!-- TÍTULO -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Historial"
+        android:textSize="26sp"
+        android:textStyle="bold"
+        android:textColor="#FFD700"
+        android:layout_marginBottom="20dp"/>
+
+    <!-- CONTENIDO -->
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent">
@@ -19,10 +35,9 @@
             android:id="@+id/txtHistory"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Cargando historial..."
+            android:textColor="#FFFFFF"
             android:textSize="16sp"
-            android:padding="20dp"/>
-
+            android:lineSpacingExtra="8dp"/>
     </ScrollView>
 
 </LinearLayout>
