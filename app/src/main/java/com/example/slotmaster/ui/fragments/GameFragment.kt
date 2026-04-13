@@ -16,10 +16,10 @@ import com.example.slotmaster.R
 import com.example.slotmaster.domain.GameEngine
 import com.example.slotmaster.data.entity.PartidaEntity
 import com.example.slotmaster.database.DatabaseProvider
-import kotlin.concurrent.thread
 import io.reactivex.rxjava3.schedulers.Schedulers
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.disposables.CompositeDisposable
+import kotlin.concurrent.thread
 
 class GameFragment : Fragment(R.layout.fragment_game) {
 
@@ -41,7 +41,18 @@ class GameFragment : Fragment(R.layout.fragment_game) {
         val btnSpin = view.findViewById<Button>(R.id.btnSpin)
         val btnExit = view.findViewById<Button>(R.id.btnExit)
 
-        txtCoins.text = "Coins: $coins"
+        val db = DatabaseProvider.getDatabase(requireContext())
+
+        // cargar monedas guardadas
+        val disposable = db.partidaDao().getLast()
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe({ partida ->
+                coins = partida.monedasFinales
+                txtCoins.text = "Coins: $coins"
+            }, {})
+
+        disposables.add(disposable)
 
         btnSpin.setOnClickListener {
 
@@ -62,9 +73,7 @@ class GameFragment : Fragment(R.layout.fragment_game) {
 
             thread {
 
-                // GIRO
                 repeat(15) {
-
                     val temp1 = symbols.random()
                     val temp2 = symbols.random()
                     val temp3 = symbols.random()
@@ -78,7 +87,6 @@ class GameFragment : Fragment(R.layout.fragment_game) {
                     Thread.sleep(80)
                 }
 
-                // PARADA + REBOTE
                 activity?.runOnUiThread {
                     reel1.setImageResource(getImage(finalResult[0]))
                     bounceAnimation(reel1)
@@ -96,17 +104,24 @@ class GameFragment : Fragment(R.layout.fragment_game) {
                     bounceAnimation(reel3)
                 }
 
-                // ⏱ pequeño delay para mejorar impacto
                 Thread.sleep(200)
 
                 val reward = gameEngine.calculateReward(finalResult, bet)
+                val oldCoins = coins
                 coins += reward
 
                 activity?.runOnUiThread {
 
-                    txtCoins.text = "Coins: $coins"
+                    animateCoins(txtCoins, oldCoins, coins)
 
-                    if (reward > 0) {
+                    if (reward >= 50) {
+
+                        showJackpot(txtResult, reward)
+                        vibrateJackpot()
+                        playJackpotSound()
+                        spawnJackpot(requireView())
+
+                    } else if (reward > 0) {
 
                         txtResult.text = "💥 WIN +$reward"
                         txtResult.setTextColor(Color.YELLOW)
@@ -136,7 +151,6 @@ class GameFragment : Fragment(R.layout.fragment_game) {
         }
     }
 
-    // símbolo imagen
     private fun getImage(symbol: String): Int {
         return when (symbol) {
             "🍒" -> R.drawable.cherry
@@ -147,144 +161,140 @@ class GameFragment : Fragment(R.layout.fragment_game) {
         }
     }
 
-    // rebote reel
     private fun bounceAnimation(view: View) {
-        view.animate()
-            .translationY(30f)
-            .setDuration(80)
+        view.animate().translationY(30f).setDuration(80)
             .withEndAction {
-                view.animate()
-                    .translationY(0f)
-                    .setDuration(120)
-                    .start()
-            }
-            .start()
+                view.animate().translationY(0f).setDuration(120).start()
+            }.start()
     }
 
-    // animación win potente
-    private fun winAnimation(view: TextView) {
+    private fun animateCoins(textView: TextView, from: Int, to: Int) {
+        val steps = 20
+        val diff = to - from
+        val increment = if (steps != 0) diff / steps else diff
 
+        thread {
+            var current = from
+            repeat(steps) {
+                current += increment
+                activity?.runOnUiThread {
+                    textView.text = "Coins: $current"
+                }
+                Thread.sleep(30)
+            }
+            activity?.runOnUiThread {
+                textView.text = "Coins: $to"
+            }
+        }
+    }
+
+    private fun winAnimation(view: TextView) {
         view.scaleX = 0.3f
         view.scaleY = 0.3f
         view.alpha = 0f
 
-        view.animate()
-            .scaleX(1.5f)
-            .scaleY(1.5f)
-            .alpha(1f)
-            .setDuration(250)
+        view.animate().scaleX(1.5f).scaleY(1.5f).alpha(1f).setDuration(250)
             .withEndAction {
-
-                view.animate()
-                    .scaleX(1.2f)
-                    .scaleY(1.2f)
-                    .setDuration(120)
-                    .withEndAction {
-
-                        view.animate()
-                            .scaleX(1.4f)
-                            .scaleY(1.4f)
-                            .setDuration(120)
-                            .start()
-                    }
-                    .start()
-            }
-            .start()
+                view.animate().scaleX(1.2f).scaleY(1.2f).setDuration(120).start()
+            }.start()
     }
 
-    // vibración
-    private fun vibrateWin() {
-        val vibrator = requireContext().getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            vibrator.vibrate(
-                VibrationEffect.createOneShot(200, VibrationEffect.DEFAULT_AMPLITUDE)
-            )
-        } else {
-            vibrator.vibrate(200)
-        }
-    }
-
-    // sonido win
-    private fun playWinSound() {
-        val mediaPlayer = MediaPlayer.create(requireContext(), R.raw.win)
-        mediaPlayer.start()
-
-        mediaPlayer.setOnCompletionListener {
-            it.release()
-        }
-    }
-
-    // celebración visual
     private fun spawnCelebration(view: View) {
-
-        val container = view.rootView as ViewGroup
-
-        // explosión inicial (impacto inmediato)
-        repeat(10) {
-            spawnCoin(container, fast = true)
-        }
-
-        // lluvia de monedas (efecto prolongado)
-        repeat(25) {
-            spawnCoin(container, fast = false)
-        }
+        val container = requireActivity().window.decorView as ViewGroup
+        repeat(25) { spawnCoin(container, false) }
     }
-    private fun spawnCoin(container: ViewGroup, fast: Boolean) {
 
+    private fun spawnCoin(container: ViewGroup, fast: Boolean) {
         val coin = ImageView(requireContext())
         coin.setImageResource(R.drawable.coin)
 
         val size = (40..100).random()
-
-        val params = ViewGroup.LayoutParams(size, size)
-        coin.layoutParams = params
+        coin.layoutParams = ViewGroup.LayoutParams(size, size)
 
         coin.x = (0..container.width).random().toFloat()
         coin.y = container.height.toFloat()
 
         container.addView(coin)
 
-        val duration = if (fast) {
-            (500..900).random().toLong()
-        } else {
-            (1200..2500).random().toLong()
-        }
-
         coin.animate()
             .translationY(-container.height.toFloat())
             .rotation((0..720).random().toFloat())
-            .alpha(0.9f)
-            .setDuration(duration)
-            .withEndAction {
-                container.removeView(coin)
-            }
+            .setDuration(if (fast) 800 else 1500)
+            .withEndAction { container.removeView(coin) }
             .start()
     }
 
-    // guardar partida
-        private fun saveGame(result: List<String>) {
+    private fun spawnJackpot(view: View) {
+        val container = requireActivity().window.decorView as ViewGroup
 
-            val resultadoTexto = result.joinToString(" ")
+        repeat(80) {
+            val coin = ImageView(requireContext())
+            coin.setImageResource(R.drawable.coin)
 
-            val partida = PartidaEntity(
-                fecha = System.currentTimeMillis(),
-                monedasFinales = coins,
-                resultado = resultadoTexto
-            )
+            val size = (50..120).random()
+            coin.layoutParams = ViewGroup.LayoutParams(size, size)
 
-            val db = DatabaseProvider.getDatabase(requireContext())
+            coin.x = (0..container.width).random().toFloat()
+            coin.y = -100f
 
-            val disposable = db.partidaDao().insert(partida)
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(
-                    { /* OK */ },
-                    { error -> error.printStackTrace() }
-                )
+            container.addView(coin)
 
-            disposables.add(disposable)
+            coin.animate()
+                .translationY(container.height.toFloat())
+                .rotation((0..1080).random().toFloat())
+                .setDuration((600..1200).random().toLong())
+                .withEndAction { container.removeView(coin) }
+                .start()
         }
+    }
+
+    private fun showJackpot(textView: TextView, reward: Int) {
+        textView.text = "💰 JACKPOT +$reward"
+        textView.setTextColor(Color.YELLOW)
+
+        textView.scaleX = 0.2f
+        textView.scaleY = 0.2f
+
+        textView.animate().scaleX(2f).scaleY(2f).setDuration(400)
+            .withEndAction {
+                textView.animate().scaleX(1.5f).scaleY(1.5f).setDuration(200).start()
+            }.start()
+    }
+
+    private fun playWinSound() {
+        MediaPlayer.create(requireContext(), R.raw.win).start()
+    }
+
+    private fun playJackpotSound() {
+        MediaPlayer.create(requireContext(), R.raw.jackpot).start()
+    }
+
+    private fun vibrateWin() {
+        val vibrator = requireContext().getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+        vibrator.vibrate(200)
+    }
+
+    private fun vibrateJackpot() {
+        val vibrator = requireContext().getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+        vibrator.vibrate(longArrayOf(0, 100, 50, 200, 50, 300), -1)
+    }
+
+    private fun saveGame(result: List<String>) {
+        val partida = PartidaEntity(
+            fecha = System.currentTimeMillis(),
+            monedasFinales = coins,
+            resultado = result.joinToString(" ")
+        )
+
+        val db = DatabaseProvider.getDatabase(requireContext())
+
+        val disposable = db.partidaDao().insert(partida)
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe({}, { it.printStackTrace() })
+
+        disposables.add(disposable)
+    }
 
     override fun onDestroyView() {
         super.onDestroyView()

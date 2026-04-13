@@ -4,8 +4,9 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
 import com.example.slotmaster.data.entity.PartidaEntity
-import io.reactivex.rxjava3.core.Completable
 import io.reactivex.rxjava3.core.Flowable
+import io.reactivex.rxjava3.core.Maybe
+import io.reactivex.rxjava3.core.Completable
 
 @Dao
 interface PartidaDao {
@@ -15,4 +16,7 @@ interface PartidaDao {
 
     @Query("SELECT * FROM partidas ORDER BY id DESC")
     fun getAll(): Flowable<List<PartidaEntity>>
+
+    @Query("SELECT * FROM partidas ORDER BY id DESC LIMIT 1")
+    fun getLast(): Maybe<PartidaEntity>
 }

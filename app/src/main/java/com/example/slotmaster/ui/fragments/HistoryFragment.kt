@@ -11,11 +11,8 @@ import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.schedulers.Schedulers
 import java.text.SimpleDateFormat
 import java.util.*
-import io.reactivex.rxjava3.disposables.CompositeDisposable
 
 class HistoryFragment : Fragment(R.layout.fragment_history) {
-
-    private val disposables = CompositeDisposable()
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -23,50 +20,37 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
         val txtHistory = view.findViewById<TextView>(R.id.txtHistory)
         val btnBack = view.findViewById<Button>(R.id.btnBack)
 
-        // Volver al menú
-        btnBack.setOnClickListener {
-            parentFragmentManager.popBackStack()
-        }
-
         val db = DatabaseProvider.getDatabase(requireContext())
 
-        val sdf = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
-
-        val disposable = db.partidaDao().getAll()
+        db.partidaDao().getAll()
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
-            .subscribe(
-                { partidas ->
+            .subscribe({ partidas ->
 
-                    val historyText = StringBuilder()
+                val sdf = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
+                val historyText = StringBuilder()
 
-                    if (partidas.isEmpty()) {
-                        historyText.append("No hay partidas")
-                    } else {
-                        partidas.forEach {
+                partidas.forEach { partida ->
 
-                            val fechaFormateada = sdf.format(Date(it.fecha))
+                    val fechaFormateada = sdf.format(Date(partida.fecha))
 
-                            historyText.append(
-                                "🗓 $fechaFormateada\n" +
-                                        "🎰 Resultado: ${it.resultado}\n" +
-                                        "💰 Monedas: ${it.monedasFinales}\n" +
-                                        "------------------------\n"
-                            )
-                        }
-                    }
-
-                    txtHistory.text = historyText.toString()
-                },
-                { error ->
-                    error.printStackTrace()
-                    txtHistory.text = "Error al cargar historial"
+                    historyText.append(
+                        "📅 $fechaFormateada\n" +
+                                "🎰 ${partida.resultado}\n" +
+                                "💰 ${partida.monedasFinales} monedas\n\n"
+                    )
                 }
-            )
-        disposables.add(disposable)
-    }
-    override fun onDestroyView() {
-        super.onDestroyView()
-        disposables.clear()
+
+                txtHistory.text = historyText.toString()
+
+            }, { error ->
+                error.printStackTrace()
+            })
+
+        btnBack.setOnClickListener {
+            parentFragmentManager.beginTransaction()
+                .replace(R.id.fragment_container, MenuFragment())
+                .commit()
+        }
     }
 }
