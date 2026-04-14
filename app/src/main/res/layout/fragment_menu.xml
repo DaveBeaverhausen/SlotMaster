@@ -48,4 +48,12 @@
         android:textColor="#FFFFFF"
         android:backgroundTint="#6C757D"/>
 
+    <!-- MUSIC -->
+    <Button
+        android:id="@+id/btnMusic"
+        android:layout_width="220dp"
+        android:layout_height="wrap_content"
+        android:text="Música ON"
+        android:layout_marginTop="20dp"/>
+
 </LinearLayout>
