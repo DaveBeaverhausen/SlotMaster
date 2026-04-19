@@ -1,24 +1,25 @@
 package com.example.slotmaster.ui.fragments
 
-import android.content.Context
-import android.graphics.Color
+import android.app.*
+import android.content.*
+import android.graphics.*
 import android.media.MediaPlayer
-import android.os.Bundle
-import android.os.VibrationEffect
-import android.os.Vibrator
-import android.view.View
+import android.os.*
+import android.provider.MediaStore
+import android.view.*
 import android.view.ViewGroup
-import android.widget.Button
-import android.widget.ImageView
-import android.widget.TextView
+import android.widget.*
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import androidx.fragment.app.Fragment
 import com.example.slotmaster.R
 import com.example.slotmaster.domain.GameEngine
 import com.example.slotmaster.data.entity.PartidaEntity
 import com.example.slotmaster.database.DatabaseProvider
-import io.reactivex.rxjava3.schedulers.Schedulers
+import com.example.slotmaster.ui.MainActivity
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.disposables.CompositeDisposable
+import io.reactivex.rxjava3.schedulers.Schedulers
 import kotlin.concurrent.thread
 
 class GameFragment : Fragment(R.layout.fragment_game) {
@@ -30,6 +31,8 @@ class GameFragment : Fragment(R.layout.fragment_game) {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        createNotificationChannel()
 
         val reel1 = view.findViewById<ImageView>(R.id.reel1)
         val reel2 = view.findViewById<ImageView>(R.id.reel2)
@@ -43,12 +46,12 @@ class GameFragment : Fragment(R.layout.fragment_game) {
 
         val db = DatabaseProvider.getDatabase(requireContext())
 
-        // cargar monedas guardadas
         val disposable = db.partidaDao().getLast()
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe({ partida ->
                 coins = partida.monedasFinales
+                if (coins <= 0) coins = 100
                 txtCoins.text = "Coins: $coins"
             }, {})
 
@@ -59,7 +62,11 @@ class GameFragment : Fragment(R.layout.fragment_game) {
             if (isSpinning) return@setOnClickListener
 
             val bet = 10
-            if (coins < bet) return@setOnClickListener
+            if (coins < bet) {
+                coins = 100
+                txtCoins.text = "Coins: $coins"
+                return@setOnClickListener
+            }
 
             isSpinning = true
             btnSpin.isEnabled = false
@@ -74,37 +81,13 @@ class GameFragment : Fragment(R.layout.fragment_game) {
             thread {
 
                 repeat(15) {
-                    val temp1 = symbols.random()
-                    val temp2 = symbols.random()
-                    val temp3 = symbols.random()
-
                     activity?.runOnUiThread {
-                        reel1.setImageResource(getImage(temp1))
-                        reel2.setImageResource(getImage(temp2))
-                        reel3.setImageResource(getImage(temp3))
+                        reel1.setImageResource(getImage(symbols.random()))
+                        reel2.setImageResource(getImage(symbols.random()))
+                        reel3.setImageResource(getImage(symbols.random()))
                     }
-
                     Thread.sleep(80)
                 }
-
-                activity?.runOnUiThread {
-                    reel1.setImageResource(getImage(finalResult[0]))
-                    bounceAnimation(reel1)
-                }
-                Thread.sleep(200)
-
-                activity?.runOnUiThread {
-                    reel2.setImageResource(getImage(finalResult[1]))
-                    bounceAnimation(reel2)
-                }
-                Thread.sleep(200)
-
-                activity?.runOnUiThread {
-                    reel3.setImageResource(getImage(finalResult[2]))
-                    bounceAnimation(reel3)
-                }
-
-                Thread.sleep(200)
 
                 val reward = gameEngine.calculateReward(finalResult, bet)
                 val oldCoins = coins
@@ -114,14 +97,9 @@ class GameFragment : Fragment(R.layout.fragment_game) {
 
                     animateCoins(txtCoins, oldCoins, coins)
 
-                    if (reward >= 50) {
+                    if (reward > 0) {
 
-                        showJackpot(txtResult, reward)
-                        vibrateJackpot()
-                        playJackpotSound()
-                        spawnJackpot(requireView())
-
-                    } else if (reward > 0) {
+                        showWinNotification(reward)
 
                         txtResult.text = "💥 WIN +$reward"
                         txtResult.setTextColor(Color.YELLOW)
@@ -130,6 +108,15 @@ class GameFragment : Fragment(R.layout.fragment_game) {
                         vibrateWin()
                         playWinSound()
                         spawnCelebration(requireView())
+
+                        AlertDialog.Builder(requireContext())
+                            .setTitle("¡Victoria!")
+                            .setMessage("¿Quieres guardar una captura?")
+                            .setPositiveButton("Sí") { _, _ ->
+                                captureScreenAndSave()
+                            }
+                            .setNegativeButton("No", null)
+                            .show()
 
                     } else {
                         txtResult.text = "❌ LOSE"
@@ -151,40 +138,119 @@ class GameFragment : Fragment(R.layout.fragment_game) {
         }
     }
 
-    private fun getImage(symbol: String): Int {
-        return when (symbol) {
-            "🍒" -> R.drawable.cherry
-            "🍋" -> R.drawable.lemon
-            "💎" -> R.drawable.diamond
-            "7" -> R.drawable.seven
-            else -> R.drawable.cherry
+    // ---------------- NOTIFICACIONES ----------------
+
+    private fun createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                "slot_channel",
+                "Wins",
+                NotificationManager.IMPORTANCE_DEFAULT
+            )
+            val manager = requireContext().getSystemService(NotificationManager::class.java)
+            manager.createNotificationChannel(channel)
         }
     }
 
-    private fun bounceAnimation(view: View) {
-        view.animate().translationY(30f).setDuration(80)
-            .withEndAction {
-                view.animate().translationY(0f).setDuration(120).start()
-            }.start()
+    private fun showWinNotification(reward: Int) {
+
+        val intent = Intent(requireContext(), MainActivity::class.java)
+        val pendingIntent = PendingIntent.getActivity(
+            requireContext(),
+            0,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val notification = NotificationCompat.Builder(requireContext(), "slot_channel")
+            .setSmallIcon(R.drawable.coin)
+            .setContentTitle("🎰 ¡Victoria!")
+            .setContentText("Has ganado $reward monedas")
+            .setContentIntent(pendingIntent)
+            .setAutoCancel(true)
+            .build()
+
+        NotificationManagerCompat.from(requireContext())
+            .notify(System.currentTimeMillis().toInt(), notification)
     }
 
-    private fun animateCoins(textView: TextView, from: Int, to: Int) {
-        val steps = 20
-        val diff = to - from
-        val increment = if (steps != 0) diff / steps else diff
+    // ---------------- CAPTURA ----------------
 
-        thread {
-            var current = from
-            repeat(steps) {
-                current += increment
-                activity?.runOnUiThread {
-                    textView.text = "Coins: $current"
-                }
-                Thread.sleep(30)
+    private fun captureScreenAndSave() {
+
+        val view = requireActivity().window.decorView.rootView
+
+        view.post {
+
+            val bitmap = Bitmap.createBitmap(
+                view.width,
+                view.height,
+                Bitmap.Config.ARGB_8888
+            )
+
+            val canvas = Canvas(bitmap)
+            view.draw(canvas)
+
+            saveImageToGallery(bitmap)
+        }
+    }
+
+    private fun saveImageToGallery(bitmap: Bitmap) {
+
+        val filename = "SlotMaster_${System.currentTimeMillis()}.png"
+
+        val resolver = requireContext().contentResolver
+
+        val values = ContentValues().apply {
+            put(MediaStore.Images.Media.DISPLAY_NAME, filename)
+            put(MediaStore.Images.Media.MIME_TYPE, "image/png")
+            put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/SlotMaster")
+        }
+
+        val uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
+
+        uri?.let {
+            val stream = resolver.openOutputStream(it)
+            if (stream != null) {
+                bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
+                stream.close()
             }
-            activity?.runOnUiThread {
-                textView.text = "Coins: $to"
-            }
+        }
+    }
+
+    // ---------------- EFECTOS ----------------
+
+    private fun playWinSound() {
+        MediaPlayer.create(requireContext(), R.raw.win).start()
+    }
+
+    private fun vibrateWin() {
+        try {
+            val vibrator = requireContext().getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+            vibrator.vibrate(200)
+        } catch (_: Exception) {}
+    }
+
+    private fun spawnCelebration(view: View) {
+        val container = requireActivity().window.decorView as ViewGroup
+        repeat(25) {
+            val coin = ImageView(requireContext())
+            coin.setImageResource(R.drawable.coin)
+
+            val size = (40..100).random()
+            coin.layoutParams = ViewGroup.LayoutParams(size, size)
+
+            coin.x = (0..container.width).random().toFloat()
+            coin.y = container.height.toFloat()
+
+            container.addView(coin)
+
+            coin.animate()
+                .translationY(-container.height.toFloat())
+                .rotation((0..720).random().toFloat())
+                .setDuration(1500)
+                .withEndAction { container.removeView(coin) }
+                .start()
         }
     }
 
@@ -199,84 +265,20 @@ class GameFragment : Fragment(R.layout.fragment_game) {
             }.start()
     }
 
-    private fun spawnCelebration(view: View) {
-        val container = requireActivity().window.decorView as ViewGroup
-        repeat(25) { spawnCoin(container, false) }
-    }
+    // ---------------- UTIL ----------------
 
-    private fun spawnCoin(container: ViewGroup, fast: Boolean) {
-        val coin = ImageView(requireContext())
-        coin.setImageResource(R.drawable.coin)
-
-        val size = (40..100).random()
-        coin.layoutParams = ViewGroup.LayoutParams(size, size)
-
-        coin.x = (0..container.width).random().toFloat()
-        coin.y = container.height.toFloat()
-
-        container.addView(coin)
-
-        coin.animate()
-            .translationY(-container.height.toFloat())
-            .rotation((0..720).random().toFloat())
-            .setDuration(if (fast) 800 else 1500)
-            .withEndAction { container.removeView(coin) }
-            .start()
-    }
-
-    private fun spawnJackpot(view: View) {
-        val container = requireActivity().window.decorView as ViewGroup
-
-        repeat(80) {
-            val coin = ImageView(requireContext())
-            coin.setImageResource(R.drawable.coin)
-
-            val size = (50..120).random()
-            coin.layoutParams = ViewGroup.LayoutParams(size, size)
-
-            coin.x = (0..container.width).random().toFloat()
-            coin.y = -100f
-
-            container.addView(coin)
-
-            coin.animate()
-                .translationY(container.height.toFloat())
-                .rotation((0..1080).random().toFloat())
-                .setDuration((600..1200).random().toLong())
-                .withEndAction { container.removeView(coin) }
-                .start()
+    private fun getImage(symbol: String): Int {
+        return when (symbol) {
+            "🍒" -> R.drawable.cherry
+            "🍋" -> R.drawable.lemon
+            "💎" -> R.drawable.diamond
+            "7" -> R.drawable.seven
+            else -> R.drawable.cherry
         }
     }
 
-    private fun showJackpot(textView: TextView, reward: Int) {
-        textView.text = "💰 JACKPOT +$reward"
-        textView.setTextColor(Color.YELLOW)
-
-        textView.scaleX = 0.2f
-        textView.scaleY = 0.2f
-
-        textView.animate().scaleX(2f).scaleY(2f).setDuration(400)
-            .withEndAction {
-                textView.animate().scaleX(1.5f).scaleY(1.5f).setDuration(200).start()
-            }.start()
-    }
-
-    private fun playWinSound() {
-        MediaPlayer.create(requireContext(), R.raw.win).start()
-    }
-
-    private fun playJackpotSound() {
-        MediaPlayer.create(requireContext(), R.raw.jackpot).start()
-    }
-
-    private fun vibrateWin() {
-        val vibrator = requireContext().getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-        vibrator.vibrate(200)
-    }
-
-    private fun vibrateJackpot() {
-        val vibrator = requireContext().getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-        vibrator.vibrate(longArrayOf(0, 100, 50, 200, 50, 300), -1)
+    private fun animateCoins(textView: TextView, from: Int, to: Int) {
+        textView.text = "Coins: $to"
     }
 
     private fun saveGame(result: List<String>) {

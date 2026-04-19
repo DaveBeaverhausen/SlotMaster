@@ -18,7 +18,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"/>
 
-    <!-- REELS CON MARCO -->
+    <!-- REELS -->
     <LinearLayout
         android:orientation="horizontal"
         android:layout_marginBottom="30dp"
@@ -62,7 +62,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"/>
 
-    <!-- BOTÓN SPIN PRO -->
+    <!-- SPIN -->
     <Button
         android:id="@+id/btnSpin"
         android:text="SPIN"
@@ -72,7 +72,17 @@
         android:backgroundTint="#FFD700"
         android:layout_width="260dp"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="20dp"/>
+        android:layout_marginBottom="15dp"/>
+
+    <!-- 🔥 NUEVO BOTÓN RECARGA -->
+    <Button
+        android:id="@+id/btnResetCoins"
+        android:text="Recargar monedas"
+        android:textColor="#FFFFFF"
+        android:backgroundTint="#28A745"
+        android:layout_width="220dp"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="15dp"/>
 
     <!-- SALIR -->
     <Button

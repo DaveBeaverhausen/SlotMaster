@@ -1,7 +1,9 @@
 package com.example.slotmaster.ui
 
+import android.Manifest
 import android.content.Intent
 import android.content.SharedPreferences
+import android.os.Build
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
@@ -20,15 +22,17 @@ class MainActivity : AppCompatActivity() {
 
         setContentView(R.layout.activity_main)
 
-        // SharedPreferences
         prefs = getSharedPreferences("settings", MODE_PRIVATE)
 
-        // 🔝 Toolbar
         val toolbar = findViewById<Toolbar>(R.id.toolbar)
         setSupportActionBar(toolbar)
         supportActionBar?.title = "SLOT MASTER"
 
-        // Pantalla inicial
+        // Permiso notificaciones
+        if (Build.VERSION.SDK_INT >= 33) {
+            requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1)
+        }
+
         if (savedInstanceState == null) {
             supportFragmentManager.beginTransaction()
                 .replace(R.id.fragment_container, WelcomeFragment())
@@ -36,13 +40,11 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // Menú
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.menu_main, menu)
         return true
     }
 
-    // Navegación
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
 
@@ -76,19 +78,14 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // APP A SEGUNDO PLANO
     override fun onPause() {
         super.onPause()
-
         stopService(Intent(this, MusicService::class.java))
     }
 
-    // APP VUELVE
     override fun onResume() {
         super.onResume()
-
         val musicOn = prefs.getBoolean("music_on", false)
-
         if (musicOn) {
             startService(Intent(this, MusicService::class.java))
         }
