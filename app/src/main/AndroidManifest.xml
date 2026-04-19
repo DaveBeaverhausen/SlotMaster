@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Permiso opcional para audio -->
+    <!-- Permiso para notificaciones -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+
+    <!-- Servicio en foreground -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
 
     <application
@@ -10,7 +13,9 @@
         android:theme="@style/Theme.SlotMaster">
 
         <!-- Servicio de música -->
-        <service android:name=".audio.MusicService" />
+        <service
+            android:name=".audio.MusicService"
+            android:exported="false" />
 
         <!-- Main Activity -->
         <activity
