@@ -4,7 +4,9 @@ import kotlin.random.Random
 
 class GameEngine {
 
-    private val symbols = listOf("🍒","⭐","🔔","💎","🍋")
+    //private val symbols = listOf("🍒","⭐","🔔","💎","🍋")
+    private val symbols = listOf("🍒","🍋","💎","7","⭐","🔔")
+
 
     fun spin(): List<String> {
 
@@ -22,7 +24,7 @@ class GameEngine {
             return bet * 5
         }
 
-        if(result[0] == result[1] || result[1] == result[2] || result[0] == result[2]) {
+        if(result[0] == result[1] || result[1] == result[2]) {
             return bet * 2
         }
 

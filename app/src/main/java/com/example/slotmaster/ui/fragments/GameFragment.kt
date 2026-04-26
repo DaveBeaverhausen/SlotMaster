@@ -76,17 +76,26 @@ class GameFragment : Fragment(R.layout.fragment_game) {
             txtCoins.text = "Coins: $coins"
 
             val finalResult = gameEngine.spin()
-            val symbols = listOf("🍒", "🍋", "💎", "7")
+            //val symbols = listOf("🍒", "🍋", "💎", "7","⭐","🔔")
 
             thread {
 
                 repeat(15) {
+                    val temp = gameEngine.spin()
+
                     activity?.runOnUiThread {
-                        reel1.setImageResource(getImage(symbols.random()))
-                        reel2.setImageResource(getImage(symbols.random()))
-                        reel3.setImageResource(getImage(symbols.random()))
+                        reel1.setImageResource(getImage(temp[0]))
+                        reel2.setImageResource(getImage(temp[1]))
+                        reel3.setImageResource(getImage(temp[2]))
                     }
+
                     Thread.sleep(80)
+                }
+
+                activity?.runOnUiThread {
+                    reel1.setImageResource(getImage(finalResult[0]))
+                    reel2.setImageResource(getImage(finalResult[1]))
+                    reel3.setImageResource(getImage(finalResult[2]))
                 }
 
                 val reward = gameEngine.calculateReward(finalResult, bet)
@@ -273,6 +282,8 @@ class GameFragment : Fragment(R.layout.fragment_game) {
             "🍋" -> R.drawable.lemon
             "💎" -> R.drawable.diamond
             "7" -> R.drawable.seven
+            "⭐" -> R.drawable.star
+            "🔔" -> R.drawable.bell
             else -> R.drawable.cherry
         }
     }
