@@ -11,20 +11,20 @@
         android:id="@+id/btnBack"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="← Volver"
+        android:text="@string/back"
         android:textColor="#FFFFFF"
         android:backgroundTint="#6C757D"
-        android:layout_marginBottom="20dp"/>
+        android:layout_marginBottom="20dp" />
 
     <!-- TÍTULO -->
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Historial"
+        android:text="@string/history"
         android:textSize="26sp"
         android:textStyle="bold"
         android:textColor="#FFD700"
-        android:layout_marginBottom="20dp"/>
+        android:layout_marginBottom="20dp" />
 
     <!-- CONTENIDO -->
     <ScrollView
@@ -37,7 +37,7 @@
             android:layout_height="wrap_content"
             android:textColor="#FFFFFF"
             android:textSize="16sp"
-            android:lineSpacingExtra="8dp"/>
+            android:lineSpacingExtra="8dp" />
     </ScrollView>
 
 </LinearLayout>

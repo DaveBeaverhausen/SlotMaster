@@ -12,31 +12,31 @@
         android:id="@+id/txtTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="SLOT MASTER"
+        android:text="@string/welcome_title_main"
         android:textSize="40sp"
         android:textStyle="bold"
         android:textColor="#FFD700"
-        android:layout_marginBottom="10dp"/>
+        android:layout_marginBottom="10dp" />
 
     <!-- SUBTÍTULO -->
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Prueba tu suerte!"
+        android:text="@string/welcome_subtitle"
         android:textSize="16sp"
         android:textColor="#FFFFFF"
-        android:layout_marginBottom="60dp"/>
+        android:layout_marginBottom="60dp" />
 
-    <!--BOTÓN COMENZAR -->
+    <!-- BOTÓN COMENZAR -->
     <Button
         android:id="@+id/btnStart"
         android:layout_width="240dp"
         android:layout_height="wrap_content"
-        android:text="COMENZAR"
+        android:text="@string/start"
         android:textSize="20sp"
         android:textStyle="bold"
         android:textColor="#000000"
         android:backgroundTint="#FFD700"
-        android:layout_marginBottom="20dp"/>
+        android:layout_marginBottom="20dp" />
 
 </LinearLayout>

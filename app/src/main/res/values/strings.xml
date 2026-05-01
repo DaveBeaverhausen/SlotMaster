@@ -1,5 +1,21 @@
 <resources>
+    <string name="language_spanish">Español</string>
+    <string name="language_english">English</string>
+    <string name="language_french">Français</string>
+
+    <string-array name="language_options">
+        <item>@string/language_spanish</item>
+        <item>@string/language_english</item>
+        <item>@string/language_french</item>
+    </string-array>
     <string name="app_name">SlotMaster</string>
+
+    <string name="menu_home">Inicio</string>
+    <string name="menu_play">Jugar</string>
+    <string name="menu_history">Historial</string>
+    <string name="menu_exit">Salir</string>
+    <string name="menu_help">Ayuda</string>
+
     <string name="play">Jugar</string>
     <string name="exit">Salir</string>
     <string name="history">Historial</string>
@@ -10,4 +26,17 @@
     <string name="yes">Sí</string>
     <string name="no">No</string>
     <string name="coins">Monedas</string>
+    <string name="welcome_title">Bienvenido a SlotMaster</string>
+    <string name="victory_message">¡Has ganado!</string>
+    <string name="music_on">Música ON</string>
+    <string name="music_off">Música OFF</string>
+    <string name="coins_initial">Monedas: 100</string>
+    <string name="coins_amount">Monedas: %1$d</string>
+    <string name="reload_coins">Recargar monedas</string>
+    <string name="empty"></string>
+    <string name="welcome_title_main">SLOT MASTER</string>
+    <string name="welcome_subtitle">¡Prueba tu suerte!</string>
+    <string name="start">COMENZAR</string>
+    <string name="back">← Volver</string>
+
 </resources>

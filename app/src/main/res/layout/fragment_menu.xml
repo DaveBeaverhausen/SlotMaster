@@ -1,59 +1,71 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:gravity="center"
     android:background="@drawable/bg_casino"
     android:padding="24dp">
 
-    <!-- TÍTULO -->
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="SLOT MASTER"
-        android:textSize="32sp"
-        android:textStyle="bold"
-        android:textColor="#FFD700"
-        android:layout_marginBottom="40dp"/>
+    <!-- SELECTOR DE IDIOMA ARRIBA -->
+   <Spinner
+        android:id="@+id/spinnerLanguage"
+        android:layout_width="170dp"
+        android:layout_height="48dp"
+        android:layout_gravity="top|end"
+        android:entries="@array/language_options"
+        android:spinnerMode="dropdown" />
 
-    <!-- PLAY -->
-    <Button
-        android:id="@+id/btnPlay"
-        android:layout_width="220dp"
+    <!-- CONTENIDO CENTRAL -->
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="PLAY"
-        android:textSize="18sp"
-        android:textStyle="bold"
-        android:textColor="#000000"
-        android:backgroundTint="#FFD700"
-        android:layout_marginBottom="20dp"/>
+        android:layout_gravity="center"
+        android:orientation="vertical"
+        android:gravity="center">
 
-    <!-- HISTORY -->
-    <Button
-        android:id="@+id/btnHistory"
-        android:layout_width="220dp"
-        android:layout_height="wrap_content"
-        android:text="HISTORIAL"
-        android:textColor="#FFFFFF"
-        android:backgroundTint="#1B263B"
-        android:layout_marginBottom="20dp"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/welcome_title_main"
+            android:textSize="32sp"
+            android:textStyle="bold"
+            android:textColor="#FFD700"
+            android:layout_marginBottom="40dp" />
 
-    <!-- EXIT -->
-    <Button
-        android:id="@+id/btnExit"
-        android:layout_width="220dp"
-        android:layout_height="wrap_content"
-        android:text="SALIR"
-        android:textColor="#FFFFFF"
-        android:backgroundTint="#6C757D"/>
+        <Button
+            android:id="@+id/btnPlay"
+            android:layout_width="220dp"
+            android:layout_height="wrap_content"
+            android:text="@string/play"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="#000000"
+            android:backgroundTint="#FFD700"
+            android:layout_marginBottom="20dp" />
 
-    <!-- MUSIC -->
-    <Button
-        android:id="@+id/btnMusic"
-        android:layout_width="220dp"
-        android:layout_height="wrap_content"
-        android:text="Música ON"
-        android:layout_marginTop="20dp"/>
+        <Button
+            android:id="@+id/btnHistory"
+            android:layout_width="220dp"
+            android:layout_height="wrap_content"
+            android:text="@string/history"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#1B263B"
+            android:layout_marginBottom="20dp" />
 
-</LinearLayout>
+        <Button
+            android:id="@+id/btnExit"
+            android:layout_width="220dp"
+            android:layout_height="wrap_content"
+            android:text="@string/exit"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#6C757D" />
+
+        <Button
+            android:id="@+id/btnMusic"
+            android:layout_width="220dp"
+            android:layout_height="wrap_content"
+            android:text="@string/music_on"
+            android:layout_marginTop="20dp" />
+
+    </LinearLayout>
+
+</FrameLayout>

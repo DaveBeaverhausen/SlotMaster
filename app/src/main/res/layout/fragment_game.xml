@@ -10,13 +10,13 @@
     <!-- MONEDAS -->
     <TextView
         android:id="@+id/txtCoins"
-        android:text="Coins: 100"
+        android:text="@string/coins_initial"
         android:textSize="24sp"
         android:textStyle="bold"
         android:textColor="#FFFFFF"
         android:layout_marginBottom="20dp"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"/>
+        android:layout_height="wrap_content" />
 
     <!-- REELS -->
     <LinearLayout
@@ -31,7 +31,7 @@
             android:layout_height="80dp"
             android:layout_margin="10dp"
             android:src="@drawable/cherry"
-            android:scaleType="fitCenter"/>
+            android:scaleType="fitCenter" />
 
         <ImageView
             android:id="@+id/reel2"
@@ -39,7 +39,7 @@
             android:layout_height="80dp"
             android:layout_margin="10dp"
             android:src="@drawable/lemon"
-            android:scaleType="fitCenter"/>
+            android:scaleType="fitCenter" />
 
         <ImageView
             android:id="@+id/reel3"
@@ -47,50 +47,50 @@
             android:layout_height="80dp"
             android:layout_margin="10dp"
             android:src="@drawable/diamond"
-            android:scaleType="fitCenter"/>
+            android:scaleType="fitCenter" />
 
     </LinearLayout>
 
     <!-- RESULTADO -->
     <TextView
         android:id="@+id/txtResult"
-        android:text=""
+        android:text="@string/empty"
         android:textSize="28sp"
         android:textStyle="bold"
         android:textColor="#FFD700"
         android:layout_marginBottom="25dp"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"/>
+        android:layout_height="wrap_content" />
 
     <!-- SPIN -->
     <Button
         android:id="@+id/btnSpin"
-        android:text="SPIN"
+        android:text="@string/spin"
         android:textSize="22sp"
         android:textStyle="bold"
         android:textColor="#000000"
         android:backgroundTint="#FFD700"
         android:layout_width="260dp"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="15dp"/>
+        android:layout_marginBottom="15dp" />
 
-    <!-- 🔥 NUEVO BOTÓN RECARGA -->
+    <!-- BOTÓN RECARGA -->
     <Button
         android:id="@+id/btnResetCoins"
-        android:text="Recargar monedas"
+        android:text="@string/reload_coins"
         android:textColor="#FFFFFF"
         android:backgroundTint="#28A745"
         android:layout_width="220dp"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="15dp"/>
+        android:layout_marginBottom="15dp" />
 
     <!-- SALIR -->
     <Button
         android:id="@+id/btnExit"
-        android:text="Salir"
+        android:text="@string/exit"
         android:textColor="#FFFFFF"
         android:backgroundTint="#6C757D"
         android:layout_width="180dp"
-        android:layout_height="wrap_content"/>
+        android:layout_height="wrap_content" />
 
 </LinearLayout>
