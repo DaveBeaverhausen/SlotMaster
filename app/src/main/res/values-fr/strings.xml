@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="menu_home">Accueil</string>
+    <string name="menu_play">Jouer</string>
+    <string name="menu_history">Historique</string>
+    <string name="menu_exit">Quitter</string>
+
+    <string name="play">Jouer</string>
+    <string name="exit">Quitter</string>
+    <string name="history">Historique</string>
+    <string name="spin">TOURNER</string>
+
+    <string name="coins">Pièces</string>
+    <string name="coins_initial">Pièces: 100</string>
+    <string name="coins_amount">Pièces: %1$d</string>
+    <string name="select_language">Sélectionner la langue</string>
+
+    <string name="welcome_title_main">SLOT MASTER</string>
+    <string name="welcome_subtitle">Tente ta chance !</string>
+
+    <string name="start">COMMENCER</string>
+    <string name="back">← Retour</string>
+
+    <string name="language_spanish">Espagnol</string>
+    <string name="language_english">Anglais</string>
+    <string name="language_french">Français</string>
+
+    <string name="app_name">SlotMaster</string>
+    <string name="menu_help">Aide</string>
+
+    <string name="win">VICTOIRE</string>
+    <string name="lose">DÉFAITE</string>
+    <string name="capture">Voulez-vous enregistrer une capture ?</string>
+    <string name="yes">Oui</string>
+    <string name="no">Non</string>
+
+    <string name="welcome_title">Bienvenue sur SlotMaster</string>
+    <string name="victory_message">Vous avez gagné !</string>
+
+    <string name="music_on">Musique ON</string>
+    <string name="music_off">Musique OFF</string>
+
+    <string name="win_amount">💥 VICTOIRE +%1$d</string>
+    <string name="reload_coins">Recharger les pièces</string>
+    <string name="idioma">🌍 Langue</string>
+    <string name="empty"></string>
+
+    <string name="calendar_title">Gagnez avec SlotMaster 🎰</string>
+    <string name="calendar_desc">Tu as gagné la partie de machines à sous</string>
+</resources>

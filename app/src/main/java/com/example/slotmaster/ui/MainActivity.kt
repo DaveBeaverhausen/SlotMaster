@@ -12,6 +12,8 @@ import androidx.appcompat.widget.Toolbar
 import com.example.slotmaster.R
 import com.example.slotmaster.audio.MusicService
 import com.example.slotmaster.ui.fragments.*
+import android.content.Context
+import java.util.Locale
 
 class MainActivity : AppCompatActivity() {
 
@@ -26,7 +28,7 @@ class MainActivity : AppCompatActivity() {
 
         val toolbar = findViewById<Toolbar>(R.id.toolbar)
         setSupportActionBar(toolbar)
-        supportActionBar?.title = "SLOT MASTER"
+        supportActionBar?.title = getString(R.string.welcome_title_main)
 
         // Permiso notificaciones
         if (Build.VERSION.SDK_INT >= 33) {
@@ -69,6 +71,13 @@ class MainActivity : AppCompatActivity() {
                 true
             }
 
+            R.id.menu_help -> {
+                supportFragmentManager.beginTransaction()
+                    .replace(R.id.fragment_container, HelpFragment())
+                    .commit()
+                true
+            }
+
             R.id.menu_exit -> {
                 finish()
                 true
@@ -90,4 +99,21 @@ class MainActivity : AppCompatActivity() {
             startService(Intent(this, MusicService::class.java))
         }
     }
+
+    override fun attachBaseContext(newBase: Context) {
+
+        val prefs = newBase.getSharedPreferences("settings", MODE_PRIVATE)
+        val lang = prefs.getString("lang", "es") ?: "es"
+
+        val locale = Locale(lang)
+        Locale.setDefault(locale)
+
+        val config = newBase.resources.configuration
+        config.setLocale(locale)
+
+        val context = newBase.createConfigurationContext(config)
+
+        super.attachBaseContext(context)
+    }
+
 }

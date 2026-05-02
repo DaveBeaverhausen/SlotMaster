@@ -1,4 +1,5 @@
 <resources>
+    <string name="select_language">Seleccionar idioma</string>
     <string name="language_spanish">Español</string>
     <string name="language_english">English</string>
     <string name="language_french">Français</string>
@@ -32,11 +33,17 @@
     <string name="music_off">Música OFF</string>
     <string name="coins_initial">Monedas: 100</string>
     <string name="coins_amount">Monedas: %1$d</string>
+    <string name="win_amount">💥 WIN +%1$d</string>
     <string name="reload_coins">Recargar monedas</string>
     <string name="empty"></string>
     <string name="welcome_title_main">SLOT MASTER</string>
     <string name="welcome_subtitle">¡Prueba tu suerte!</string>
     <string name="start">COMENZAR</string>
     <string name="back">← Volver</string>
+    <string name="idioma">🌍 Idioma</string>
+
+    <string name="calendar_title">Victoria SlotMaster 🎰</string>
+    <string name="calendar_desc">Has ganado una partida</string>
+
 
 </resources>

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="select_language">Select Language</string>
+    <string name="menu_home">Home</string>
+    <string name="menu_play">Play</string>
+    <string name="menu_history">History</string>
+    <string name="menu_exit">Exit</string>
+
+    <string name="play">Play</string>
+    <string name="exit">Exit</string>
+    <string name="history">History</string>
+    <string name="spin">SPIN</string>
+
+    <string name="coins">Coins</string>
+    <string name="coins_initial">Coins: 100</string>
+    <string name="coins_amount">Coins: %1$d</string>
+
+    <string name="welcome_title_main">SLOT MASTER</string>
+    <string name="welcome_subtitle">Try your luck!</string>
+
+    <string name="start">START</string>
+    <string name="back">← Back</string>
+
+    <string name="language_spanish">Spanish</string>
+    <string name="language_english">English</string>
+    <string name="language_french">French</string>
+
+    <string name="app_name">SlotMaster</string>
+    <string name="menu_help">Help</string>
+
+    <string name="win">WIN</string>
+    <string name="lose">LOSE</string>
+    <string name="capture">Do you want to save a screenshot?</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+
+    <string name="welcome_title">Welcome to SlotMaster</string>
+    <string name="victory_message">You won!</string>
+
+    <string name="music_on">Music ON</string>
+    <string name="music_off">Music OFF</string>
+
+    <string name="win_amount">💥 WIN +%1$d</string>
+    <string name="reload_coins">Reload coins</string>
+    <string name="idioma">🌍 Language</string>
+    <string name="empty"></string>
+
+    <string name="calendar_title">Win SlotMaster 🎰</string>
+    <string name="calendar_desc">You won the slot match</string>
+</resources>

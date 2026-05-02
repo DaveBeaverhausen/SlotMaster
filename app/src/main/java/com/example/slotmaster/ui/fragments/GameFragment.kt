@@ -21,6 +21,12 @@ import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.schedulers.Schedulers
 import kotlin.concurrent.thread
+import android.Manifest
+import android.content.ContentValues
+import android.content.pm.PackageManager
+import android.provider.CalendarContract
+import androidx.core.content.ContextCompat
+import java.util.TimeZone
 
 class GameFragment : Fragment(R.layout.fragment_game) {
 
@@ -52,7 +58,7 @@ class GameFragment : Fragment(R.layout.fragment_game) {
             .subscribe({ partida ->
                 coins = partida.monedasFinales
                 if (coins <= 0) coins = 100
-                txtCoins.text = "Coins: $coins"
+                txtCoins.text = getString(R.string.coins_amount, coins)
             }, {})
 
         disposables.add(disposable)
@@ -64,7 +70,7 @@ class GameFragment : Fragment(R.layout.fragment_game) {
             val bet = 10
             if (coins < bet) {
                 coins = 100
-                txtCoins.text = "Coins: $coins"
+                txtCoins.text = getString(R.string.coins_amount, coins)
                 return@setOnClickListener
             }
 
@@ -73,7 +79,7 @@ class GameFragment : Fragment(R.layout.fragment_game) {
             txtResult.text = ""
 
             coins -= bet
-            txtCoins.text = "Coins: $coins"
+            txtCoins.text = getString(R.string.coins_amount, coins)
 
             val finalResult = gameEngine.spin()
             //val symbols = listOf("🍒", "🍋", "💎", "7","⭐","🔔")
@@ -110,7 +116,10 @@ class GameFragment : Fragment(R.layout.fragment_game) {
 
                         showWinNotification(reward)
 
-                        txtResult.text = "💥 WIN +$reward"
+                        // lanzar guardado en calendario fuera del UI thread
+                        saveWinToCalendar()
+
+                        txtResult.text = getString(R.string.win_amount, reward)
                         txtResult.setTextColor(Color.YELLOW)
 
                         winAnimation(txtResult)
@@ -119,16 +128,15 @@ class GameFragment : Fragment(R.layout.fragment_game) {
                         spawnCelebration(requireView())
 
                         AlertDialog.Builder(requireContext())
-                            .setTitle("¡Victoria!")
-                            .setMessage("¿Quieres guardar una captura?")
-                            .setPositiveButton("Sí") { _, _ ->
+                            .setTitle(getString(R.string.win))
+                            .setMessage(getString(R.string.capture))
+                            .setPositiveButton(getString(R.string.yes)) { _, _ ->
                                 captureScreenAndSave()
                             }
-                            .setNegativeButton("No", null)
+                            .setNegativeButton(getString(R.string.no), null)
                             .show()
-
                     } else {
-                        txtResult.text = "❌ LOSE"
+                        txtResult.text = getString(R.string.lose)
                         txtResult.setTextColor(Color.RED)
                     }
 
@@ -144,6 +152,14 @@ class GameFragment : Fragment(R.layout.fragment_game) {
             parentFragmentManager.beginTransaction()
                 .replace(R.id.fragment_container, MenuFragment())
                 .commit()
+        }
+
+        if (ContextCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.WRITE_CALENDAR
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            requestPermissions(arrayOf(Manifest.permission.WRITE_CALENDAR), 200)
         }
     }
 
@@ -289,7 +305,7 @@ class GameFragment : Fragment(R.layout.fragment_game) {
     }
 
     private fun animateCoins(textView: TextView, from: Int, to: Int) {
-        textView.text = "Coins: $to"
+        textView.text = getString(R.string.coins_amount, to)
     }
 
     private fun saveGame(result: List<String>) {
@@ -312,5 +328,78 @@ class GameFragment : Fragment(R.layout.fragment_game) {
     override fun onDestroyView() {
         super.onDestroyView()
         disposables.clear()
+    }
+
+    /**
+     * Guarda una victoria en el calendario del dispositivo.
+     * - Usa ContentProvider (CalendarContract)
+     * - Se ejecuta en un hilo secundario
+     * - Registra fecha y hora actual
+     */
+    private fun saveWinToCalendar() {
+
+        // Comprobar permisos
+        if (ContextCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.WRITE_CALENDAR
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            requestPermissions(arrayOf(Manifest.permission.WRITE_CALENDAR), 200)
+            return
+        }
+
+        // Ejecutar en hilo
+        Thread {
+
+            try {
+                val startTime = System.currentTimeMillis()
+                val endTime = startTime + 60 * 60 * 1000 // duración 1 hora
+
+                val values = ContentValues().apply {
+                    put(CalendarContract.Events.DTSTART, startTime)
+                    put(CalendarContract.Events.DTEND, endTime)
+
+                    // ✔ INTERNACIONALIZADO
+                    put(CalendarContract.Events.TITLE, getString(R.string.calendar_title))
+                    put(CalendarContract.Events.DESCRIPTION, getString(R.string.calendar_desc))
+
+                    put(CalendarContract.Events.CALENDAR_ID, getCalendarId())
+                    put(CalendarContract.Events.EVENT_TIMEZONE, TimeZone.getDefault().id)
+                }
+
+                requireContext().contentResolver.insert(
+                    CalendarContract.Events.CONTENT_URI,
+                    values
+                )
+
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+
+        }.start()
+    }
+
+    /**
+     * Obtiene el ID del calendario disponible en el dispositivo.
+     */
+    private fun getCalendarId(): Long {
+
+        val projection = arrayOf(CalendarContract.Calendars._ID)
+
+        val cursor = requireContext().contentResolver.query(
+            CalendarContract.Calendars.CONTENT_URI,
+            projection,
+            null,
+            null,
+            null
+        )
+
+        cursor?.use {
+            if (it.moveToFirst()) {
+                return it.getLong(0)
+            }
+        }
+
+        return 1 // fallback
     }
 }
