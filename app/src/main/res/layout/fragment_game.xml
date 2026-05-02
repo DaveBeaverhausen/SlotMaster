@@ -77,20 +77,20 @@
     <!-- BOTÓN RECARGA -->
     <Button
         android:id="@+id/btnResetCoins"
-        android:text="@string/reload_coins"
-        android:textColor="#FFFFFF"
-        android:backgroundTint="#28A745"
-        android:layout_width="220dp"
+        android:layout_width="264dp"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="15dp" />
+        android:layout_marginBottom="15dp"
+        android:backgroundTint="#28A745"
+        android:text="@string/reload_coins"
+        android:textColor="#FFFFFF" />
 
     <!-- SALIR -->
     <Button
         android:id="@+id/btnExit"
-        android:text="@string/exit"
-        android:textColor="#FFFFFF"
+        android:layout_width="269dp"
+        android:layout_height="wrap_content"
         android:backgroundTint="#6C757D"
-        android:layout_width="180dp"
-        android:layout_height="wrap_content" />
+        android:text="@string/exit"
+        android:textColor="#FFFFFF" />
 
 </LinearLayout>

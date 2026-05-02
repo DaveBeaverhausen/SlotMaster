@@ -25,6 +25,7 @@ import android.Manifest
 import android.content.ContentValues
 import android.content.pm.PackageManager
 import android.provider.CalendarContract
+import android.util.Log
 import androidx.core.content.ContextCompat
 import java.util.TimeZone
 
@@ -156,10 +157,16 @@ class GameFragment : Fragment(R.layout.fragment_game) {
 
         if (ContextCompat.checkSelfPermission(
                 requireContext(),
-                Manifest.permission.WRITE_CALENDAR
+                Manifest.permission.READ_CALENDAR
             ) != PackageManager.PERMISSION_GRANTED
         ) {
-            requestPermissions(arrayOf(Manifest.permission.WRITE_CALENDAR), 200)
+            requestPermissions(
+                arrayOf(
+                    Manifest.permission.READ_CALENDAR,
+                    Manifest.permission.WRITE_CALENDAR
+                ),
+                200
+            )
         }
     }
 
@@ -338,41 +345,81 @@ class GameFragment : Fragment(R.layout.fragment_game) {
      */
     private fun saveWinToCalendar() {
 
-        // Comprobar permisos
-        if (ContextCompat.checkSelfPermission(
+        Log.d("CALENDAR", "Intentando guardar evento...")
+
+        // 1. Comprobar permisos correctamente
+        if (
+            ContextCompat.checkSelfPermission(
                 requireContext(),
                 Manifest.permission.WRITE_CALENDAR
+            ) != PackageManager.PERMISSION_GRANTED ||
+            ContextCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.READ_CALENDAR
             ) != PackageManager.PERMISSION_GRANTED
         ) {
-            requestPermissions(arrayOf(Manifest.permission.WRITE_CALENDAR), 200)
+            Log.e("CALENDAR", "Permisos NO concedidos")
             return
         }
 
-        // Ejecutar en hilo
+        // 2. Ejecutar en hilo
         Thread {
 
             try {
-                val startTime = System.currentTimeMillis()
-                val endTime = startTime + 60 * 60 * 1000 // duración 1 hora
+
+                val calendarId = getCalendarId()
+
+                Log.d("CALENDAR", "Calendar ID obtenido: $calendarId")
+
+                //val startTime = System.currentTimeMillis()
+                //val startTime = System.currentTimeMillis() + 2 * 60 * 1000
+                //val endTime = startTime + 60 * 60 * 1000 // 1 hora
+                val startTime = System.currentTimeMillis() + 60 * 1000
+                val endTime = startTime + 5 * 60 * 1000
 
                 val values = ContentValues().apply {
                     put(CalendarContract.Events.DTSTART, startTime)
                     put(CalendarContract.Events.DTEND, endTime)
-
-                    // ✔ INTERNACIONALIZADO
-                    put(CalendarContract.Events.TITLE, getString(R.string.calendar_title))
-                    put(CalendarContract.Events.DESCRIPTION, getString(R.string.calendar_desc))
-
-                    put(CalendarContract.Events.CALENDAR_ID, getCalendarId())
+                    put(CalendarContract.Events.TITLE, "Victoria SlotMaster 🎰")
+                    put(CalendarContract.Events.DESCRIPTION, "Ganaste una partida")
+                    put(CalendarContract.Events.CALENDAR_ID, calendarId)
                     put(CalendarContract.Events.EVENT_TIMEZONE, TimeZone.getDefault().id)
+                    put(CalendarContract.Events.HAS_ALARM, 1)
                 }
 
-                requireContext().contentResolver.insert(
+                val uri = requireContext().contentResolver.insert(
                     CalendarContract.Events.CONTENT_URI,
                     values
                 )
 
+                if (uri != null) {
+
+                    Log.d("CALENDAR", "✅ Evento insertado: $uri")
+
+                    val eventId = uri.lastPathSegment?.toLongOrNull()
+
+                    if (eventId != null) {
+
+                        val reminderValues = ContentValues().apply {
+                            put(CalendarContract.Reminders.EVENT_ID, eventId)
+                            put(CalendarContract.Reminders.MINUTES, 1)
+                            put(CalendarContract.Reminders.METHOD, CalendarContract.Reminders.METHOD_ALERT)
+                        }
+
+                        requireContext().contentResolver.insert(
+                            CalendarContract.Reminders.CONTENT_URI,
+                            reminderValues
+                        )
+
+                        Log.d("CALENDAR", "🔔 Recordatorio añadido al evento")
+                    }
+
+                } else {
+                    Log.e("CALENDAR", "❌ ERROR insert NULL")
+                }
+
             } catch (e: Exception) {
+                Log.e("CALENDAR", "❌ EXCEPCIÓN: ${e.message}")
                 e.printStackTrace()
             }
 
@@ -384,7 +431,11 @@ class GameFragment : Fragment(R.layout.fragment_game) {
      */
     private fun getCalendarId(): Long {
 
-        val projection = arrayOf(CalendarContract.Calendars._ID)
+        val projection = arrayOf(
+            CalendarContract.Calendars._ID,
+            CalendarContract.Calendars.ACCOUNT_NAME,
+            CalendarContract.Calendars.ACCOUNT_TYPE
+        )
 
         val cursor = requireContext().contentResolver.query(
             CalendarContract.Calendars.CONTENT_URI,
@@ -395,11 +446,28 @@ class GameFragment : Fragment(R.layout.fragment_game) {
         )
 
         cursor?.use {
-            if (it.moveToFirst()) {
-                return it.getLong(0)
+
+            Log.d("CALENDAR", "Buscando calendario de Google...")
+
+            while (it.moveToNext()) {
+                val id = it.getLong(0)
+                val accountName = it.getString(1)
+                val accountType = it.getString(2)
+
+                Log.d("CALENDAR", "ID=$id | Account=$accountName | Type=$accountType")
+
+                // 👉 Este es el filtro clave
+                if (accountType == "com.google") {
+                    Log.d("CALENDAR", "✔ Usando calendario GOOGLE: $id")
+                    return id
+                }
             }
+
+            // fallback → si no hay Google
+            it.moveToFirst()
+            return it.getLong(0)
         }
 
-        return 1 // fallback
+        throw Exception("No hay calendarios disponibles")
     }
 }

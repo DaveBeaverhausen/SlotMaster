@@ -17,7 +17,18 @@ class HelpFragment : Fragment(R.layout.fragment_help) {
         val webView = view.findViewById<WebView>(R.id.webViewHelp)
         webView.webViewClient = WebViewClient()
         webView.settings.javaScriptEnabled = false
-        webView.loadUrl("file:///android_asset/help.html")
+        webView.settings.loadWithOverviewMode = true
+        webView.settings.useWideViewPort = true
+        val prefs = requireContext().getSharedPreferences("settings", 0)
+        val lang = prefs.getString("lang", "es") ?: "es"
+
+        val fileName = when (lang) {
+            "en" -> "help_en.html"
+            "fr" -> "help_fr.html"
+            else -> "help_es.html"
+        }
+
+        webView.loadUrl("file:///android_asset/$fileName")
 
         // BOTÓN VOLVER
         val btnBack = view.findViewById<Button>(R.id.btnBack)
