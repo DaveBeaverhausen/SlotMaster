@@ -29,7 +29,6 @@ import android.util.Log
 import androidx.core.content.ContextCompat
 import java.util.TimeZone
 
-// 🔥 FIREBASE IMPORTS
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.auth.FirebaseAuth
 
@@ -118,28 +117,14 @@ class GameFragment : Fragment(R.layout.fragment_game) {
 
                     if (reward > 0) {
 
-                        showWinNotification(reward)
-                        saveWinToCalendar()
+                        // 🔥 DEBUG
+                        Log.d("FIRESTORE", "ENTRA A SAVE")
 
-                        // 🔥 FIRESTORE (AQUÍ ESTÁ LO IMPORTANTE)
-                        val db = FirebaseFirestore.getInstance()
-                        val user = FirebaseAuth.getInstance().currentUser
+                        // 🔥 FIREBASE
+                        saveWinToFirebase(reward)
 
-                        val data = hashMapOf(
-                            "userId" to user?.uid,
-                            "username" to user?.displayName,
-                            "score" to reward,
-                            "timestamp" to System.currentTimeMillis()
-                        )
-
-                        db.collection("scores")
-                            .add(data)
-                            .addOnSuccessListener {
-                                Log.d("FIRESTORE", "Guardado OK")
-                            }
-                            .addOnFailureListener {
-                                Log.e("FIRESTORE", "Error", it)
-                            }
+                        // 🔥 TOP 10
+                        getTopScores()
 
                         txtResult.text = getString(R.string.win_amount, reward)
                         txtResult.setTextColor(Color.YELLOW)
@@ -176,21 +161,75 @@ class GameFragment : Fragment(R.layout.fragment_game) {
                 .replace(R.id.fragment_container, MenuFragment())
                 .commit()
         }
-
-        if (ContextCompat.checkSelfPermission(
-                requireContext(),
-                Manifest.permission.READ_CALENDAR
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            requestPermissions(
-                arrayOf(
-                    Manifest.permission.READ_CALENDAR,
-                    Manifest.permission.WRITE_CALENDAR
-                ),
-                200
-            )
-        }
     }
+
+    //  FIREBASE SAVE
+    private fun saveWinToFirebase(reward: Int) {
+
+        val user = FirebaseAuth.getInstance().currentUser
+
+        if (user == null) {
+            Log.e("FIRESTORE", "Usuario NULL")
+            return
+        }
+
+        val db = FirebaseFirestore.getInstance()
+
+        val data = hashMapOf(
+            "userId" to user.uid,
+            "username" to (user.displayName ?: "unknown"),
+            "score" to reward,
+            "timestamp" to System.currentTimeMillis()
+        )
+
+        db.collection("scores")
+            .add(data)
+            .addOnSuccessListener {
+                Log.d("FIRESTORE", "✅ Guardado OK")
+            }
+            .addOnFailureListener {
+                Log.e("FIRESTORE", "❌ Error", it)
+            }
+    }
+    // 🔥 TOP 10
+    private fun getTopScores() {
+
+        val db = FirebaseFirestore.getInstance()
+
+        db.collection("scores")
+            .orderBy("score", com.google.firebase.firestore.Query.Direction.DESCENDING)
+            .limit(10)
+            .get()
+            .addOnSuccessListener { result ->
+
+                val list = mutableListOf<String>()
+
+                for (doc in result) {
+                    val user = doc.getString("username") ?: "unknown"
+                    val score = doc.getLong("score") ?: 0
+                    list.add("$user → $score")
+                }
+
+                showTopDialog(list)
+            }
+            .addOnFailureListener {
+                Log.e("TOP10", "Error obteniendo ranking", it)
+            }
+    }
+
+    // 🔥 UI TOP
+    private fun showTopDialog(list: List<String>) {
+
+        val message = if (list.isEmpty()) "Sin datos"
+        else list.joinToString("\n")
+
+        AlertDialog.Builder(requireContext())
+            .setTitle("🏆 TOP 10 GLOBAL")
+            .setMessage(message)
+            .setPositiveButton("OK", null)
+            .show()
+    }
+
 
     // ---------------- NOTIFICACIONES ----------------
 

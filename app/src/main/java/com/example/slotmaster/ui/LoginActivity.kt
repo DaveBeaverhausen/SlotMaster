@@ -2,6 +2,7 @@ package com.example.slotmaster.ui
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.widget.Button
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -45,9 +46,18 @@ class LoginActivity : AppCompatActivity() {
 
         try {
             val account = task.getResult(ApiException::class.java)
-            firebaseAuthWithGoogle(account.idToken!!)
+
+            val idToken = account.idToken
+
+            if (idToken != null) {
+                Log.d("LOGIN", "ID TOKEN OK")
+                firebaseAuthWithGoogle(idToken)
+            } else {
+                Log.e("LOGIN", "ID TOKEN NULL")
+            }
+
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e("LOGIN", "Google SignIn ERROR", e)
         }
     }
 
@@ -65,12 +75,14 @@ class LoginActivity : AppCompatActivity() {
 
                 if (task.isSuccessful) {
 
-                    // LOGIN OK
+                    Log.d("LOGIN", "Firebase LOGIN OK")
+
+                    // LOGIN OK → ir a la app
                     startActivity(Intent(this, MainActivity::class.java))
                     finish()
 
                 } else {
-                    task.exception?.printStackTrace()
+                    Log.e("LOGIN", "Firebase LOGIN FAIL", task.exception)
                 }
             }
     }
