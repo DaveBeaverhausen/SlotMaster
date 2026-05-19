@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "9073471027",
+    "project_id": "slotmaster-c3100",
+    "storage_bucket": "slotmaster-c3100.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:9073471027:android:853d1a6bcc161366c57d46",
+        "android_client_info": {
+          "package_name": "com.example.slotmaster"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "9073471027-2hrgbe8bc97r4cir3bic4b77mkt0oi57.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.slotmaster",
+            "certificate_hash": "89fd623fea4642e7d0b2cca1a353b02187b78e69"
+          }
+        },
+        {
+          "client_id": "9073471027-vic57hg28vo9l6bmago7790sp35gfjgk.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC99_WpHwMBcyLUY55hEa6Guxa6_dmG7mA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "9073471027-vic57hg28vo9l6bmago7790sp35gfjgk.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

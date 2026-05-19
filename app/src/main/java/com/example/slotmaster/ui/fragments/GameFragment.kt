@@ -29,6 +29,10 @@ import android.util.Log
 import androidx.core.content.ContextCompat
 import java.util.TimeZone
 
+// 🔥 FIREBASE IMPORTS
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.auth.FirebaseAuth
+
 class GameFragment : Fragment(R.layout.fragment_game) {
 
     private val disposables = CompositeDisposable()
@@ -51,9 +55,9 @@ class GameFragment : Fragment(R.layout.fragment_game) {
         val btnSpin = view.findViewById<Button>(R.id.btnSpin)
         val btnExit = view.findViewById<Button>(R.id.btnExit)
 
-        val db = DatabaseProvider.getDatabase(requireContext())
+        val dbLocal = DatabaseProvider.getDatabase(requireContext())
 
-        val disposable = db.partidaDao().getLast()
+        val disposable = dbLocal.partidaDao().getLast()
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe({ partida ->
@@ -83,7 +87,6 @@ class GameFragment : Fragment(R.layout.fragment_game) {
             txtCoins.text = getString(R.string.coins_amount, coins)
 
             val finalResult = gameEngine.spin()
-            //val symbols = listOf("🍒", "🍋", "💎", "7","⭐","🔔")
 
             thread {
 
@@ -116,9 +119,27 @@ class GameFragment : Fragment(R.layout.fragment_game) {
                     if (reward > 0) {
 
                         showWinNotification(reward)
-
-                        // lanzar guardado en calendario fuera del UI thread
                         saveWinToCalendar()
+
+                        // 🔥 FIRESTORE (AQUÍ ESTÁ LO IMPORTANTE)
+                        val db = FirebaseFirestore.getInstance()
+                        val user = FirebaseAuth.getInstance().currentUser
+
+                        val data = hashMapOf(
+                            "userId" to user?.uid,
+                            "username" to user?.displayName,
+                            "score" to reward,
+                            "timestamp" to System.currentTimeMillis()
+                        )
+
+                        db.collection("scores")
+                            .add(data)
+                            .addOnSuccessListener {
+                                Log.d("FIRESTORE", "Guardado OK")
+                            }
+                            .addOnFailureListener {
+                                Log.e("FIRESTORE", "Error", it)
+                            }
 
                         txtResult.text = getString(R.string.win_amount, reward)
                         txtResult.setTextColor(Color.YELLOW)
@@ -136,6 +157,7 @@ class GameFragment : Fragment(R.layout.fragment_game) {
                             }
                             .setNegativeButton(getString(R.string.no), null)
                             .show()
+
                     } else {
                         txtResult.text = getString(R.string.lose)
                         txtResult.setTextColor(Color.RED)
