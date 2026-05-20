@@ -28,7 +28,7 @@ import android.provider.CalendarContract
 import android.util.Log
 import androidx.core.content.ContextCompat
 import java.util.TimeZone
-
+import com.example.slotmaster.database.GameRepository
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.auth.FirebaseAuth
 
@@ -63,7 +63,9 @@ class GameFragment : Fragment(R.layout.fragment_game) {
                 coins = partida.monedasFinales
                 if (coins <= 0) coins = 100
                 txtCoins.text = getString(R.string.coins_amount, coins)
-            }, {})
+            }, { error ->
+                Log.e("ROOM", "Error cargando última partida", error)
+            })
 
         disposables.add(disposable)
 
@@ -117,13 +119,10 @@ class GameFragment : Fragment(R.layout.fragment_game) {
 
                     if (reward > 0) {
 
-                        // 🔥 DEBUG
                         Log.d("FIRESTORE", "ENTRA A SAVE")
 
-                        // 🔥 FIREBASE
                         saveWinToFirebase(reward)
 
-                        // 🔥 TOP 10
                         getTopScores()
 
                         txtResult.text = getString(R.string.win_amount, reward)
@@ -151,7 +150,7 @@ class GameFragment : Fragment(R.layout.fragment_game) {
                     isSpinning = false
                     btnSpin.isEnabled = true
 
-                    saveGame(finalResult)
+                    saveGame(finalResult, reward, bet)
                 }
             }
         }
@@ -163,7 +162,6 @@ class GameFragment : Fragment(R.layout.fragment_game) {
         }
     }
 
-    //  FIREBASE SAVE
     private fun saveWinToFirebase(reward: Int) {
 
         val user = FirebaseAuth.getInstance().currentUser
@@ -177,7 +175,7 @@ class GameFragment : Fragment(R.layout.fragment_game) {
 
         val data = hashMapOf(
             "userId" to user.uid,
-            "username" to (user.displayName ?: "unknown"),
+            "username" to (user.displayName ?: user.email ?: "unknown"),
             "score" to reward,
             "timestamp" to System.currentTimeMillis()
         )
@@ -185,13 +183,13 @@ class GameFragment : Fragment(R.layout.fragment_game) {
         db.collection("scores")
             .add(data)
             .addOnSuccessListener {
-                Log.d("FIRESTORE", "✅ Guardado OK")
+                Log.d("FIRESTORE", "Guardado OK")
             }
             .addOnFailureListener {
-                Log.e("FIRESTORE", "❌ Error", it)
+                Log.e("FIRESTORE", "Error", it)
             }
     }
-    // 🔥 TOP 10
+
     private fun getTopScores() {
 
         val db = FirebaseFirestore.getInstance()
@@ -217,21 +215,17 @@ class GameFragment : Fragment(R.layout.fragment_game) {
             }
     }
 
-    // 🔥 UI TOP
     private fun showTopDialog(list: List<String>) {
 
         val message = if (list.isEmpty()) "Sin datos"
         else list.joinToString("\n")
 
         AlertDialog.Builder(requireContext())
-            .setTitle("🏆 TOP 10 GLOBAL")
+            .setTitle("TOP 10 GLOBAL")
             .setMessage(message)
             .setPositiveButton("OK", null)
             .show()
     }
-
-
-    // ---------------- NOTIFICACIONES ----------------
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -257,7 +251,7 @@ class GameFragment : Fragment(R.layout.fragment_game) {
 
         val notification = NotificationCompat.Builder(requireContext(), "slot_channel")
             .setSmallIcon(R.drawable.coin)
-            .setContentTitle("🎰 ¡Victoria!")
+            .setContentTitle("Victoria")
             .setContentText("Has ganado $reward monedas")
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
@@ -266,8 +260,6 @@ class GameFragment : Fragment(R.layout.fragment_game) {
         NotificationManagerCompat.from(requireContext())
             .notify(System.currentTimeMillis().toInt(), notification)
     }
-
-    // ---------------- CAPTURA ----------------
 
     private fun captureScreenAndSave() {
 
@@ -311,8 +303,6 @@ class GameFragment : Fragment(R.layout.fragment_game) {
         }
     }
 
-    // ---------------- EFECTOS ----------------
-
     private fun playWinSound() {
         MediaPlayer.create(requireContext(), R.raw.win).start()
     }
@@ -326,6 +316,7 @@ class GameFragment : Fragment(R.layout.fragment_game) {
 
     private fun spawnCelebration(view: View) {
         val container = requireActivity().window.decorView as ViewGroup
+
         repeat(25) {
             val coin = ImageView(requireContext())
             coin.setImageResource(R.drawable.coin)
@@ -358,8 +349,6 @@ class GameFragment : Fragment(R.layout.fragment_game) {
             }.start()
     }
 
-    // ---------------- UTIL ----------------
-
     private fun getImage(symbol: String): Int {
         return when (symbol) {
             "🍒" -> R.drawable.cherry
@@ -376,11 +365,14 @@ class GameFragment : Fragment(R.layout.fragment_game) {
         textView.text = getString(R.string.coins_amount, to)
     }
 
-    private fun saveGame(result: List<String>) {
+    private fun saveGame(result: List<String>, reward: Int, bet: Int) {
+        val symbols = result.joinToString(" ")
+        val gameResult = if (reward > 0) "WIN" else "LOSE"
+
         val partida = PartidaEntity(
             fecha = System.currentTimeMillis(),
             monedasFinales = coins,
-            resultado = result.joinToString(" ")
+            resultado = symbols
         )
 
         val db = DatabaseProvider.getDatabase(requireContext())
@@ -388,9 +380,35 @@ class GameFragment : Fragment(R.layout.fragment_game) {
         val disposable = db.partidaDao().insert(partida)
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
-            .subscribe({}, { it.printStackTrace() })
+            .subscribe(
+                {
+                    Log.d("ROOM", "Partida guardada en local")
+                },
+                { error ->
+                    Log.e("ROOM", "Error al guardar partida local", error)
+                }
+            )
 
         disposables.add(disposable)
+
+        val user = FirebaseAuth.getInstance().currentUser
+        val username = user?.displayName ?: user?.email ?: "unknown"
+
+        GameRepository().saveGameHistory(
+            username = username,
+            score = reward,
+            result = gameResult,
+            symbols = symbols,
+            coinsAfter = coins,
+            bet = bet,
+            durationSeconds = 0L,
+            onSuccess = {
+                Log.d("FIRESTORE", "Partida global guardada correctamente")
+            },
+            onError = { error ->
+                Log.e("FIRESTORE", "Error al guardar partida global: $error")
+            }
+        )
     }
 
     override fun onDestroyView() {
@@ -398,17 +416,10 @@ class GameFragment : Fragment(R.layout.fragment_game) {
         disposables.clear()
     }
 
-    /**
-     * Guarda una victoria en el calendario del dispositivo.
-     * - Usa ContentProvider (CalendarContract)
-     * - Se ejecuta en un hilo secundario
-     * - Registra fecha y hora actual
-     */
     private fun saveWinToCalendar() {
 
         Log.d("CALENDAR", "Intentando guardar evento...")
 
-        // 1. Comprobar permisos correctamente
         if (
             ContextCompat.checkSelfPermission(
                 requireContext(),
@@ -423,7 +434,6 @@ class GameFragment : Fragment(R.layout.fragment_game) {
             return
         }
 
-        // 2. Ejecutar en hilo
         Thread {
 
             try {
@@ -432,16 +442,13 @@ class GameFragment : Fragment(R.layout.fragment_game) {
 
                 Log.d("CALENDAR", "Calendar ID obtenido: $calendarId")
 
-                //val startTime = System.currentTimeMillis()
-                //val startTime = System.currentTimeMillis() + 2 * 60 * 1000
-                //val endTime = startTime + 60 * 60 * 1000 // 1 hora
                 val startTime = System.currentTimeMillis() + 60 * 1000
                 val endTime = startTime + 5 * 60 * 1000
 
                 val values = ContentValues().apply {
                     put(CalendarContract.Events.DTSTART, startTime)
                     put(CalendarContract.Events.DTEND, endTime)
-                    put(CalendarContract.Events.TITLE, "Victoria SlotMaster 🎰")
+                    put(CalendarContract.Events.TITLE, "Victoria SlotMaster")
                     put(CalendarContract.Events.DESCRIPTION, "Ganaste una partida")
                     put(CalendarContract.Events.CALENDAR_ID, calendarId)
                     put(CalendarContract.Events.EVENT_TIMEZONE, TimeZone.getDefault().id)
@@ -455,7 +462,7 @@ class GameFragment : Fragment(R.layout.fragment_game) {
 
                 if (uri != null) {
 
-                    Log.d("CALENDAR", "✅ Evento insertado: $uri")
+                    Log.d("CALENDAR", "Evento insertado: $uri")
 
                     val eventId = uri.lastPathSegment?.toLongOrNull()
 
@@ -472,24 +479,21 @@ class GameFragment : Fragment(R.layout.fragment_game) {
                             reminderValues
                         )
 
-                        Log.d("CALENDAR", "🔔 Recordatorio añadido al evento")
+                        Log.d("CALENDAR", "Recordatorio añadido al evento")
                     }
 
                 } else {
-                    Log.e("CALENDAR", "❌ ERROR insert NULL")
+                    Log.e("CALENDAR", "ERROR insert NULL")
                 }
 
             } catch (e: Exception) {
-                Log.e("CALENDAR", "❌ EXCEPCIÓN: ${e.message}")
+                Log.e("CALENDAR", "EXCEPCIÓN: ${e.message}")
                 e.printStackTrace()
             }
 
         }.start()
     }
 
-    /**
-     * Obtiene el ID del calendario disponible en el dispositivo.
-     */
     private fun getCalendarId(): Long {
 
         val projection = arrayOf(
@@ -517,14 +521,12 @@ class GameFragment : Fragment(R.layout.fragment_game) {
 
                 Log.d("CALENDAR", "ID=$id | Account=$accountName | Type=$accountType")
 
-                // 👉 Este es el filtro clave
                 if (accountType == "com.google") {
-                    Log.d("CALENDAR", "✔ Usando calendario GOOGLE: $id")
+                    Log.d("CALENDAR", "Usando calendario GOOGLE: $id")
                     return id
                 }
             }
 
-            // fallback → si no hay Google
             it.moveToFirst()
             return it.getLong(0)
         }

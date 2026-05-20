@@ -22,6 +22,14 @@
           }
         },
         {
+          "client_id": "9073471027-lom0hf97373inr0c2br4i0nl7majlbqa.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.slotmaster",
+            "certificate_hash": "401026d55b81515e5378cc64f23f3ef1f96dece2"
+          }
+        },
+        {
           "client_id": "9073471027-vic57hg28vo9l6bmago7790sp35gfjgk.apps.googleusercontent.com",
           "client_type": 3
         }
